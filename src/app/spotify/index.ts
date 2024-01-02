@@ -1,14 +1,22 @@
-import { SearchResults, SpotifyApi, Playlist } from "@spotify/web-api-ts-sdk";
+import { SearchResults, SpotifyApi, Playlist, Scopes } from "@spotify/web-api-ts-sdk";
 
 // TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
 // I would want to alert the user that the first 100 were completed, and move on to the next 100, and so on.
 
-export class SpotifySDK {
+export default class SpotifySDK {
     sdk: SpotifyApi;
 
     constructor(sdk: SpotifyApi) {
       this.sdk = sdk;
+    }
+
+    // Creates the initial Spotify SDK
+    public static CreateSDK()
+    {
+        console.log("Got here too");
+        const sdk = SpotifyApi.withUserAuthorization(process.env.NEXT_PUBLIC_CLIENT_ID ?? "", "http://localhost:3000", Scopes.all);
+        return sdk;
     }
 
     private async GetUserId()

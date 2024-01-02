@@ -1,22 +1,54 @@
 import { AppleMusicApi } from "../types/apple-music-api";
 
-const headers = {
-    Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN}`,
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-    'Music-User-Token': `${process.env.NEXT_PUBLIC_MUSIC_USER_TOKEN}`
-}
-
 export class AppleMusicAPI {
+
     instance: MusicKit.MusicKitInstance | null;
     baseUrl: string = 'https://api.music.apple.com/v1';
+    musicKitToken: string | null = null;
 
     constructor(instance: MusicKit.MusicKitInstance) {
       this.instance = instance;
+      this.LogIn = this.LogIn.bind(this);
+      this.LogOut = this.LogOut.bind(this);
     }
 
-    async FetchSongsFromPlaylist(id: string): Promise<AppleMusicApi.Song[]>
+    /**
+     * Retrieves header for Apple Music API requests
+     * @returns header for creating requests to Apple Music API
+     */
+    private GetHeader()
     {
+        return {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? ""}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'Music-User-Token': this.musicKitToken ?? ""
+        };
+    }
+
+    /**
+     * Logs user into Apple Music
+     */
+    public async LogIn(): Promise<void> {
+        await this.instance?.unauthorize();
+        await this.instance?.authorize().then((token: any) => this.musicKitToken = token);
+    }
+
+    /**
+     * Logs user out of Apple Music
+     */
+    public async LogOut(): Promise<void> {
+        await this.instance?.unauthorize();
+    }
+
+    /**
+     * Fetch all songs from the given playlist
+     * @param id Apple Music playlist id
+     * @returns array of songs
+     */
+    public async FetchSongsFromPlaylist(id: string): Promise<AppleMusicApi.Song[]>
+    {
+        // TODO: Change the data type from any
         const all_songs: any[] = [];
 
         let api_url = this.baseUrl + `/me/library/playlists/${id}/tracks`
@@ -30,13 +62,13 @@ export class AppleMusicAPI {
             try {
                 // Fetch the first 25 songs in the playlist
                 const response: AppleMusicApi.Relationship<AppleMusicApi.Playlist> = await fetch(api_url, {
-                    headers: headers
+                    headers: this.GetHeader()
                 }).then(response => response.json()).then(data => { return data });
 
                 all_songs.push(...response.data);
 
                 // Update url to include new offset
-                api_url = response.next ? baseUrl + response.next : '';
+                api_url = response.next ? this.baseUrl + response.next : '';
 
             } catch (error: any) {
                 console.error(`Error: ${error.message}`);
@@ -52,7 +84,11 @@ export class AppleMusicAPI {
         return all_songs;
     }
 
-    async FetchPlaylists(): Promise<AppleMusicApi.Playlist[]> {
+    /**
+     * Fetch all playlists from the user's library
+     * @returns array of playlists
+     */
+    public async FetchPlaylists(): Promise<AppleMusicApi.Playlist[]> {
         const all_playlists: AppleMusicApi.Playlist[] = [];
 
         let api_url = this.baseUrl + '/me/library/playlists?offset=0';
@@ -66,7 +102,7 @@ export class AppleMusicAPI {
             try {
                 // Fetch the first 25 playlists in the user's library
                 const response: AppleMusicApi.Relationship<AppleMusicApi.Playlist> = await fetch(api_url, {
-                    headers: headers
+                    headers: this.GetHeader()
                 }).then(response => response.json()).then(data => { return data });
 
                 all_playlists.push(...response.data);
@@ -86,7 +122,11 @@ export class AppleMusicAPI {
         return all_playlists;
     }
 
-    async FetchLibrary() {
+    /**
+     * Fetch all songs in the user's library
+     * @returns array of songs
+     */
+    public async FetchSongsFromLibrary() {
         const all_songs: AppleMusicApi.Song[] = [];
 
         let api_url = this.baseUrl + '/me/library/songs?offset=0';
@@ -100,7 +140,7 @@ export class AppleMusicAPI {
             try {
                 // Fetch the first 25 songs in the user's library
                 const response: AppleMusicApi.Relationship<AppleMusicApi.Song> = await fetch(api_url, {
-                    headers: headers
+                    headers: this.GetHeader()
                 }).then(response => response.json()).then(data => { return data });
 
                 all_songs.push(...response.data);
