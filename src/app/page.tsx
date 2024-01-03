@@ -10,8 +10,12 @@ function Home() {
   const [musicKitInstance, setMusicKitInstance] = useState<AppleMusicAPI>({} as AppleMusicAPI);
   const [spotifySDK, setSpotifySDK] = useState<SpotifySDK>({} as SpotifySDK);
   const [source, setSource] = React.useState<BaseSource | null | undefined>(null);
+  const [selectedSource, setSelectedSource] = React.useState<BaseSource | null>(null);
 
   // Fetch the Apple Music MusicKit instance on initial page load
+  // TODO: Whenever the user refreshes the browser, the user music token is lost
+  // and the user needs to reauthenticate. This is a bug that needs to be fixed.
+  // Currently throws a 403 error when trying to fetch the user's library
   useEffect(() => {
     window.MusicKit.configure({
       developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN,
@@ -27,6 +31,18 @@ function Home() {
     new SpotifySDK(SpotifySDK.CreateSDK()),
     musicKitInstance,
   ];
+
+  const HandleSourceSelection = (source: BaseSource) => {
+    console.log("Selected Source: ", source?.name);
+    setSelectedSource(prevSource => prevSource === source ? null : source);
+  };
+
+  const HandleContinueSource = async () => {
+    const loggedIn = await selectedSource?.LogIn();
+    if (loggedIn) {
+      setSource(selectedSource);
+    }
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
@@ -52,10 +68,11 @@ function Home() {
                   {
                     sources.map((source, index) => (
                       <div key={index} className='py-4'>
-                        <button onClick={() => setSource(source)}>{source.name}</button>
+                        <button onClick={() => HandleSourceSelection(source)}>{source.name}</button>
                       </div>)
                     )
                   }
+                  <button onClick={HandleContinueSource} disabled={selectedSource === null}>Continue</button>
                 </div>
             }
           </div>

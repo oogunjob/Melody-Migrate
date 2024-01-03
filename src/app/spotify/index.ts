@@ -47,18 +47,20 @@ export default class SpotifySDK implements BaseSource {
         return null;
     }
 
+    // TODO: Need to figure out how to add logic to log in to Spotify from here
+    // and make this a pop up window instead of a new page
     LogIn = async () => {
-        // Apple Music login logic here
+        console.log("Logging in to Spotify");
+        return true;
     };
 
     FetchPlaylists = async (): Promise<any[]> => {
         const userId = await this.GetUserId();
-        const playlists = this.sdk.playlists.getUsersPlaylists(userId);
-        return [];
+        const playlists = await this.sdk.playlists.getUsersPlaylists(userId);
+        return playlists.items;
     };
 
     GetPlaylistName = (playlist: any): string => {
-        // Get Apple Music playlist name logic here
-        return "";
+        return playlist.name;
     };
 }

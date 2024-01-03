@@ -12,8 +12,6 @@ export class AppleMusicAPI implements BaseSource{
     constructor(instance: MusicKit.MusicKitInstance) {
       this.instance = instance;
       this.musicKitToken = instance.musicUserToken;
-      this.LogIn = this.LogIn.bind(this);
-      this.LogOut = this.LogOut.bind(this);
     }
 
     /**
@@ -29,6 +27,15 @@ export class AppleMusicAPI implements BaseSource{
             'Music-User-Token': this.musicKitToken ?? ""
         };
     }
+
+    LogIn = async (): Promise<Boolean> => {
+        let success = false;
+
+        await this.instance?.unauthorize();
+        await this.instance?.authorize().then((token: any) => { this.musicKitToken = token; success = true });
+
+        return success;
+    };
 
     /**
      * Logs user out of Apple Music
@@ -117,11 +124,6 @@ export class AppleMusicAPI implements BaseSource{
 
         return all_songs;
     }
-
-    LogIn = async (): Promise<void> => {
-        await this.instance?.unauthorize();
-        await this.instance?.authorize().then((token: any) => this.musicKitToken = token);
-    };
 
     FetchPlaylists = async (): Promise<any[]> => {
         const all_playlists: AppleMusicApi.Playlist[] = [];
