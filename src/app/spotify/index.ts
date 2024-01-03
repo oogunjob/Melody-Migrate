@@ -1,10 +1,10 @@
-import { SearchResults, SpotifyApi, Playlist, Scopes } from "@spotify/web-api-ts-sdk";
-import { BaseSource } from "../types/sources";
+import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track } from "@spotify/web-api-ts-sdk";
+import { BaseProvider } from "../types/sources";
 
 // TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
 // I would want to alert the user that the first 100 were completed, and move on to the next 100, and so on.
-export default class SpotifySDK implements BaseSource {
+export default class SpotifySDK implements BaseProvider {
     sdk: SpotifyApi;
     name: string = "Spotify";
     icon: string = "";
@@ -27,10 +27,12 @@ export default class SpotifySDK implements BaseSource {
     }
 
     // TODO: Come back and make the documentation for this look better
-    public async SearchForSong(artist: string, songTitle: string, albumTitle: string)
+    SearchForSong = async (artist: string, songTitle: string, albumTitle: string): Promise<string> =>
     {
         const results: SearchResults<["track"]> = await this.sdk.search(`${artist} ${songTitle} ${albumTitle}`, ["track"], "US", 3)
-        return results;
+
+        // TODO: Need to change this to return the uri of the song
+        return results.tracks?.items.length ? results.tracks.items[0].id : "";
     }
 
     // TODO: Make the documentation here look better
@@ -55,12 +57,42 @@ export default class SpotifySDK implements BaseSource {
     };
 
     FetchPlaylists = async (): Promise<any[]> => {
-        const userId = await this.GetUserId();
-        const playlists = await this.sdk.playlists.getUsersPlaylists(userId);
+        const userId: string = await this.GetUserId();
+        const playlists: Page<Playlist> = await this.sdk.playlists.getUsersPlaylists(userId);
         return playlists.items;
     };
 
     GetPlaylistName = (playlist: any): string => {
         return playlist.name;
     };
+
+    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
+        throw new Error("Cannot transfer to Spotify from Spotify provider.");
+    }
+
+    /**
+     * Transfers the playlists from Spotify to Apple Music
+     * @param destination Apple Music provider that the playlists will be transfered to
+     * @param playlists playlists from Spotify to transfer
+     */
+    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
+        const spotifyPlaylists: Playlist[] = playlists as Playlist[];
+        console.log(spotifyPlaylists);
+
+        for (const playlist of spotifyPlaylists)
+        {
+            // Get all tracks in the playlist
+            // Need to make sure that I get all of the tracks in the playlist, currently only gets the first 50 tracks
+            const tracks = await this.sdk.playlists.getPlaylistItems(playlist.id, "US",)
+
+            // Search for each track in the playlist on Apple Music
+            const appleMusicTracksIds: string[] = [];
+            for (const track of tracks.items)
+            {
+                const trackDetails = (track.track as unknown) as Track;
+                const songId = await destination.SearchForSong(trackDetails.name, trackDetails.artists[0].name, trackDetails.album.name);
+                console.log(songId);
+            }
+        }
+    }
 }

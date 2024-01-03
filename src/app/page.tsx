@@ -2,22 +2,27 @@
 import React, { useEffect, useState } from 'react';
 import { AppleMusicAPI } from './apple';
 import SpotifySDK from './spotify';
-import { Scopes, SpotifyApi } from '@spotify/web-api-ts-sdk';
 import Playlists from './components/playlists';
-import { BaseSource } from './types/sources';
+import { BaseProvider } from './types/sources';
+
+// TODO: Once this is deployed, will need to make sure that the source cannot be accessed
+// from regular browser.
 
 function Home() {
   const [musicKitInstance, setMusicKitInstance] = useState<AppleMusicAPI>({} as AppleMusicAPI);
-  const [spotifySDK, setSpotifySDK] = useState<SpotifySDK>({} as SpotifySDK);
-  const [source, setSource] = React.useState<BaseSource | null | undefined>(null);
-  const [selectedSource, setSelectedSource] = React.useState<BaseSource | null>(null);
+  const [source, setSource] = React.useState<BaseProvider | null | undefined>(null);
+  const [destination, setDestination] = React.useState<BaseProvider | null | undefined>(null);
+  const [selectedSource, setSelectedSource] = React.useState<BaseProvider | null>(null);
+  const [selectedDestination, setSelectedDestination] = React.useState<BaseProvider | null>(null);
+
+  const [selectedPlaylists, setSelectedPlaylists] = React.useState<any[]>([]);
 
   // Fetch the Apple Music MusicKit instance on initial page load
   // TODO: Whenever the user refreshes the browser, the user music token is lost
   // and the user needs to reauthenticate. This is a bug that needs to be fixed.
   // Currently throws a 403 error when trying to fetch the user's library
   useEffect(() => {
-    window.MusicKit.configure({
+    window.MusicKit?.configure({
       developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN,
       icon: 'https://raw.githubusercontent.com/Musish/Musish/assets/misc/authIcon.png'
     });
@@ -26,21 +31,46 @@ function Home() {
     setMusicKitInstance(musicKit);
   }, []);
 
-  // Available sources for playlist/library retrieval
-  const sources: BaseSource[] = [
+  // Available sources/destinations for playlist/library retrieval and transfer
+  const providers: BaseProvider[] = [
     new SpotifySDK(SpotifySDK.CreateSDK()),
     musicKitInstance,
   ];
 
-  const HandleSourceSelection = (source: BaseSource) => {
+  const HandleSourceSelection = (source: BaseProvider) => {
     console.log("Selected Source: ", source?.name);
     setSelectedSource(prevSource => prevSource === source ? null : source);
+  };
+
+  const HandleDestinationSelection = (destination: BaseProvider) => {
+    console.log("Selected Destination: ", destination?.name);
+    setSelectedDestination(prevDestination => prevDestination === destination ? null : destination);
   };
 
   const HandleContinueSource = async () => {
     const loggedIn = await selectedSource?.LogIn();
     if (loggedIn) {
       setSource(selectedSource);
+    }
+  }
+
+  const HandleContinueDestination = async () => {
+    const loggedIn = await selectedDestination?.LogIn();
+    if (loggedIn) {
+      setDestination(selectedDestination);
+    }
+  }
+
+  const HandleTransfer = async () => {
+    switch (destination?.name) {
+        case "Spotify":
+            await source?.TransferPlaylistsToSpotify(destination, selectedPlaylists);
+            break;
+        case "Apple Music":
+            await source?.TransferPlaylistsToAppleMusic(destination, selectedPlaylists);
+            break;
+        default:
+            break;
     }
   }
 
@@ -58,15 +88,19 @@ function Home() {
         <div className="max-w-7xl px-5 flex space-x-5 w-full h-full items-center justify-center mx-auto">
           <div className="h-full w-full bg-gray-300 rounded-md">
             <div>
-              <h1 className="mb-6 text-4xl font-bold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-5xl md:text-4xl lg:text-5xl md:tracking-tight">Source</h1>
+              <h1 className="mb-6 text-4xl font-bold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-5xl md:text-4xl lg:text-5xl md:tracking-tight">
+                Select Source Platform
+              </h1>
             </div>
             {
               source ?
-                <Playlists source={source} />
+                // Display playlists to select and transfer
+                <Playlists source={source} selectedPlaylists={selectedPlaylists} setSelectedPlaylists={setSelectedPlaylists}/>
                 :
+                // Display sources to select
                 <div>
                   {
-                    sources.map((source, index) => (
+                    providers.map((source, index) => (
                       <div key={index} className='py-4'>
                         <button onClick={() => HandleSourceSelection(source)}>{source.name}</button>
                       </div>)
@@ -76,8 +110,25 @@ function Home() {
                 </div>
             }
           </div>
-          <div className="flex h-full w-full bg-gray-300 rounded-md">
+          <div className="h-full w-full bg-gray-300 rounded-md">
             <h1 className="mb-6 text-4xl font-bold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-5xl md:text-4xl lg:text-5xl md:tracking-tight">Destination</h1>
+            {
+              destination ?
+                // Transfer button
+                <button onClick={HandleTransfer}>Transfer</button>
+                :
+                // Display destination to select
+              <div>
+                {
+                  providers.filter((provider) => provider.name !== source?.name).map((destination, index) => (
+                    <div key={index} className='py-4'>
+                      <button onClick={() => HandleDestinationSelection(destination)}>{destination.name}</button>
+                    </div>)
+                  )
+                }
+                <button onClick={HandleContinueDestination} disabled={selectedDestination === null}>Continue</button>
+              </div>
+            }
           </div>
         </div>
       </section>

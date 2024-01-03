@@ -1,7 +1,7 @@
 import { AppleMusicApi } from "../types/apple-music-api";
-import { BaseSource } from "../types/sources";
+import { BaseProvider } from "../types/sources";
 
-export class AppleMusicAPI implements BaseSource{
+export class AppleMusicAPI implements BaseProvider{
 
     name = "Apple Music";
     icon = "apple";
@@ -11,7 +11,7 @@ export class AppleMusicAPI implements BaseSource{
 
     constructor(instance: MusicKit.MusicKitInstance) {
       this.instance = instance;
-      this.musicKitToken = instance.musicUserToken;
+      this.musicKitToken = instance?.musicUserToken;
     }
 
     /**
@@ -43,6 +43,8 @@ export class AppleMusicAPI implements BaseSource{
     public async LogOut(): Promise<void> {
         await this.instance?.unauthorize();
     }
+
+
 
     /**
      * Fetch all songs from the given playlist
@@ -125,6 +127,10 @@ export class AppleMusicAPI implements BaseSource{
         return all_songs;
     }
 
+    SearchForSong = async (songTitle: string, artist: string, albumTitle: string): Promise<string> => {
+        return "Testing";
+    }
+
     FetchPlaylists = async (): Promise<any[]> => {
         const all_playlists: AppleMusicApi.Playlist[] = [];
 
@@ -157,10 +163,23 @@ export class AppleMusicAPI implements BaseSource{
         console.log(`It took ${endTime - startTime} milliseconds to fetch ${all_playlists.length} playlists.`);
 
         return all_playlists;
-    };
+    }
 
     GetPlaylistName = (playlist: any): string => {
         // Get Apple Music playlist name logic here
-        return playlist.attributes?.name;
-    };
+        return playlist?.attributes?.name;
+    }
+
+    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
+        throw new Error("Cannot transfer to Apple Music from Apple Music provider.");
+    }
+
+    /**
+     * Transfers the playlists from Apple Music to Spotify
+     * @param destination Spotify provider that the playlists will be transfered to
+     * @param playlists playlists to transfer
+     */
+    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
+        throw new Error("Cannot transfer to Spotify from Apple Music provider.");
+    }
 }
