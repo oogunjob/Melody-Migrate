@@ -9,7 +9,7 @@ interface MusicObject {
     contentRating: string;
 }
 
-export class AppleMusicAPI implements BaseProvider{
+export class AppleMusicAPI implements BaseProvider {
     name = "Apple Music";
     icon = "apple";
     baseUrl: string = 'https://api.music.apple.com/v1';
@@ -36,13 +36,13 @@ export class AppleMusicAPI implements BaseProvider{
         };
     }
 
-    private CreatePlaylistBody(playlistName: string, trackIds: string[]): any {
+    private CreatePlaylistBody(playlistName: string, trackIds: string[], description: string = ""): any {
         const mappedSongs: {id: string, type: string}[] = trackIds.map(id => ({ id, type: "songs" }));
 
         return {
             "attributes": {
                 "name": playlistName,
-                "description": "..."
+                "description": description
             },
             "relationships": {
                 "tracks": {
@@ -261,22 +261,47 @@ export class AppleMusicAPI implements BaseProvider{
      * @param playlists playlists to transfer
      */
     TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
-        throw new Error("Cannot transfer to Spotify from Apple Music provider.");
+        const appleMusicPlaylists: AppleMusicApi.Playlist[] = playlists as AppleMusicApi.Playlist[];
+
+        for (const playlist of appleMusicPlaylists)
+        {
+            // Get all tracks in the playlist
+            // Need to make sure that I get all of the tracks in the playlist, currently only gets the first 50 tracks
+            const tracks = await this.FetchSongsFromPlaylist(playlist.id);
+
+            // Search for each track in the playlist on Spotify
+            const spotifyTracksIds: string[] = [];
+            for (const track of tracks)
+            {
+                const songId = await destination.SearchForSong(track.attributes?.name, track.attributes?.artistName, track.attributes?.albumName, track.attributes?.contentRating === "explicit");
+
+                // Push the song id to the array if it was found on Spotify
+                if (songId)
+                {
+                    spotifyTracksIds.push(songId);
+                }
+            }
+
+            // Create the playlist on Spotify
+            const playlistId = await destination.CreatePlaylist(playlist.attributes?.name ?? "", spotifyTracksIds, playlist.attributes?.description?.short ?? "");
+            console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
+        }
     }
 
-    public CreatePlaylist = async (playlistName: string, trackIds: string[]) => {
+    // Need to add this method to the interface, all providers should have this method
+    CreatePlaylist = async (playlistName: string, tracks: string[], description: string = ""): Promise<string> => {
         let api_url = this.baseUrl + '/me/library/playlists';
 
-        const response = await fetch(api_url, {
+        const response: AppleMusicApi.PlaylistResponse = await fetch(api_url, {
             headers: this.GetHeader(),
             method: "POST",
-            body: JSON.stringify(this.CreatePlaylistBody(playlistName, trackIds)),
+            body: JSON.stringify(this.CreatePlaylistBody(playlistName, tracks, description)),
             mode: 'cors'
         }).then((response) => { return response.json()
         }).catch((error) => {
             console.log(error)
         })
 
-        console.log(response);
+        return response.data[0].id;
     }
 }

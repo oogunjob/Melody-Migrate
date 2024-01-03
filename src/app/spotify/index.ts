@@ -1,6 +1,5 @@
 import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track } from "@spotify/web-api-ts-sdk";
 import { BaseProvider } from "../types/sources";
-import { AppleMusicAPI } from "../apple";
 
 // TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
@@ -33,21 +32,19 @@ export default class SpotifySDK implements BaseProvider {
         const results: SearchResults<["track"]> = await this.sdk.search(`${artist} ${songTitle} ${albumTitle}`, ["track"], "US", 3)
 
         // TODO: Need to change this to return the uri of the song
-        return results.tracks?.items.length ? results.tracks.items[0].id : "";
+        return results.tracks?.items.length ? results.tracks.items[0].uri : "";
     }
 
-    // TODO: Make the documentation here look better
-    // Create the playlist
-    public async CreatePlaylist(name: string, uris: string[])
-    {
+    // Need to add this method to the interface, all providers should have this method
+    CreatePlaylist = async (playlistName: string, tracks: string[], description: string = ""): Promise<string> => {
         const userId: string = await this.GetUserId();
-        const playlist: Playlist = await this.sdk.playlists.createPlaylist(userId, { name: name, description: "Created by Universal Music Library Transfer", public: false });
+        const playlist: Playlist = await this.sdk.playlists.createPlaylist(userId, { name: playlistName, description: description, public: false });
 
         // Add track to playlist
         // TODO: Check if there is a limit on the number of tracks that can be added at one time
-        await this.sdk.playlists.addItemsToPlaylist(playlist.id, uris)
+        await this.sdk.playlists.addItemsToPlaylist(playlist.id, tracks);
 
-        return null;
+        return playlist.id;
     }
 
     // TODO: Need to figure out how to add logic to log in to Spotify from here
@@ -78,7 +75,6 @@ export default class SpotifySDK implements BaseProvider {
      */
     TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
         const spotifyPlaylists: Playlist[] = playlists as Playlist[];
-        console.log(spotifyPlaylists);
 
         for (const playlist of spotifyPlaylists)
         {
@@ -88,7 +84,6 @@ export default class SpotifySDK implements BaseProvider {
 
             // Search for each track in the playlist on Apple Music
             const appleMusicTracksIds: string[] = [];
-            console.log("Searching for tracks on Apple Music for playlist: " + playlist.name);
             for (const track of tracks.items)
             {
                 const trackDetails = (track.track as unknown) as Track;
@@ -101,11 +96,9 @@ export default class SpotifySDK implements BaseProvider {
                 }
             }
 
-            // Create the playlist on Apple
-            const provider: AppleMusicAPI = destination as AppleMusicAPI;
-            const playlistId = await provider.CreatePlaylist(playlist.name, appleMusicTracksIds);
-
-            console.log(playlistId)
+            // Create the playlist on Apple Music
+            const playlistId = await destination.CreatePlaylist(playlist.name, appleMusicTracksIds, playlist.description);
+            console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
         }
     }
 }
