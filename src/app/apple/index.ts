@@ -1,13 +1,21 @@
 import { AppleMusicApi } from "../types/apple-music-api";
 import { BaseProvider } from "../types/sources";
 
-export class AppleMusicAPI implements BaseProvider{
+// TODO: Rename this or make it look better
+interface MusicObject {
+    artistName: string;
+    songTitle: string;
+    albumTitle: string;
+    contentRating: string;
+}
 
+export class AppleMusicAPI implements BaseProvider{
     name = "Apple Music";
     icon = "apple";
-    instance: MusicKit.MusicKitInstance | null;
     baseUrl: string = 'https://api.music.apple.com/v1';
-    musicKitToken: string | null = null;
+
+    private instance: MusicKit.MusicKitInstance | null;
+    private musicKitToken: string | null = null;
 
     constructor(instance: MusicKit.MusicKitInstance) {
       this.instance = instance;
@@ -28,10 +36,24 @@ export class AppleMusicAPI implements BaseProvider{
         };
     }
 
+    private CreatePlaylistBody(playlistName: string, trackIds: string[]): any {
+        const mappedSongs: {id: string, type: string}[] = trackIds.map(id => ({ id, type: "songs" }));
+
+        return {
+            "attributes": {
+                "name": playlistName,
+                "description": "..."
+            },
+            "relationships": {
+                "tracks": {
+                    "data": mappedSongs
+                }
+            }
+        }
+    }
+
     LogIn = async (): Promise<Boolean> => {
         let success = false;
-
-        await this.instance?.unauthorize();
         await this.instance?.authorize().then((token: any) => { this.musicKitToken = token; success = true });
 
         return success;
@@ -43,8 +65,6 @@ export class AppleMusicAPI implements BaseProvider{
     public async LogOut(): Promise<void> {
         await this.instance?.unauthorize();
     }
-
-
 
     /**
      * Fetch all songs from the given playlist
@@ -127,8 +147,70 @@ export class AppleMusicAPI implements BaseProvider{
         return all_songs;
     }
 
-    SearchForSong = async (songTitle: string, artist: string, albumTitle: string): Promise<string> => {
-        return "Testing";
+    private FindBestMatch(songs: AppleMusicApi.Song[], criteria: MusicObject): string {
+        let bestMatchId: string = "";
+        let bestMatchScore = -1;
+
+        for (const song of songs)
+        {
+            let currentScore = 0;
+
+            if (song.attributes?.name === criteria.songTitle) {
+                currentScore += 4;
+            }
+            if (song.attributes?.artistName === criteria.artistName) {
+                currentScore += 3;
+            } if (song.attributes?.contentRating === criteria.contentRating) {
+                currentScore += 2;
+            } if (song.attributes?.albumName === criteria.albumTitle) {
+                currentScore += 1;
+            }
+
+            if (currentScore > bestMatchScore) {
+                bestMatchScore = currentScore;
+                bestMatchId = song.id;
+            }
+        }
+
+        const foundObject = songs.find(song => song.id === bestMatchId);
+        if (foundObject !== undefined) {
+            // console.log(`Found best match for ${criteria.songTitle} by ${criteria.artistName} with a score of ${bestMatchScore}: ${foundObject.attributes?.name} by ${foundObject.attributes?.artistName}`);
+        }
+        else {
+            // console.log(`Could not find best match for ${criteria.songTitle} by ${criteria.artistName}.`);
+        }
+
+        return bestMatchId;
+    }
+
+    // TODO: Need to account for potential 429 errors
+    SearchForSong = async (songTitle: string, artist: string, albumTitle: string, explicit: boolean = true): Promise<string> => {
+        const encodedQuery = encodeURIComponent(`${songTitle} ${artist} ${albumTitle} ${explicit ? "explicit" : "clean"}`);
+        let api_url = this.baseUrl + `/catalog/us/search?types=songs&term=${encodedQuery}&limit=3`;
+
+        let songId: string = "";
+
+        try {
+            // Fetch the first 25 playlists in the user's library
+            const response: AppleMusicApi.AppleMusicSearchResult = await fetch(api_url, {
+                headers: this.GetHeader(),
+            }).then(response => response.json()).then(data => { return data });
+
+            // TODO: NEED TO FIGURE OUT HOW TO HANDLE THE CASE WHERE THERE ARE NO RESULTS
+            // THE RESULTS SHOW UP ON APPLE MUSIC BUT NOT IN THE API RESPONSE
+            // MAY NEED TO IMPROVE THE SEARCH QUERY
+            if (response.results.songs && response.results.songs.data !== undefined) {
+                songId = this.FindBestMatch(response.results.songs.data, { artistName: artist, songTitle: songTitle, albumTitle: albumTitle, contentRating: explicit ? "explicit" : "clean" })
+            }
+            else{
+                // console.log("Could not find song: " + songTitle + " by " + artist + " on Apple Music.");
+            }
+
+        } catch (error: any) {
+            console.error(`Error: ${error.message}`);
+        }
+
+        return songId;
     }
 
     FetchPlaylists = async (): Promise<any[]> => {
@@ -166,7 +248,6 @@ export class AppleMusicAPI implements BaseProvider{
     }
 
     GetPlaylistName = (playlist: any): string => {
-        // Get Apple Music playlist name logic here
         return playlist?.attributes?.name;
     }
 
@@ -181,5 +262,21 @@ export class AppleMusicAPI implements BaseProvider{
      */
     TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
         throw new Error("Cannot transfer to Spotify from Apple Music provider.");
+    }
+
+    public CreatePlaylist = async (playlistName: string, trackIds: string[]) => {
+        let api_url = this.baseUrl + '/me/library/playlists';
+
+        const response = await fetch(api_url, {
+            headers: this.GetHeader(),
+            method: "POST",
+            body: JSON.stringify(this.CreatePlaylistBody(playlistName, trackIds)),
+            mode: 'cors'
+        }).then((response) => { return response.json()
+        }).catch((error) => {
+            console.log(error)
+        })
+
+        console.log(response);
     }
 }

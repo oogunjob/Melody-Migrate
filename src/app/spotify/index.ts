@@ -1,5 +1,6 @@
 import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track } from "@spotify/web-api-ts-sdk";
 import { BaseProvider } from "../types/sources";
+import { AppleMusicAPI } from "../apple";
 
 // TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
@@ -87,12 +88,24 @@ export default class SpotifySDK implements BaseProvider {
 
             // Search for each track in the playlist on Apple Music
             const appleMusicTracksIds: string[] = [];
+            console.log("Searching for tracks on Apple Music for playlist: " + playlist.name);
             for (const track of tracks.items)
             {
                 const trackDetails = (track.track as unknown) as Track;
                 const songId = await destination.SearchForSong(trackDetails.name, trackDetails.artists[0].name, trackDetails.album.name);
-                console.log(songId);
+
+                // Push the song id to the array if it was found on Apple Music
+                if (songId)
+                {
+                    appleMusicTracksIds.push(songId);
+                }
             }
+
+            // Create the playlist on Apple
+            const provider: AppleMusicAPI = destination as AppleMusicAPI;
+            const playlistId = await provider.CreatePlaylist(playlist.name, appleMusicTracksIds);
+
+            console.log(playlistId)
         }
     }
 }

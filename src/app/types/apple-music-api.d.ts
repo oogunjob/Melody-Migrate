@@ -211,4 +211,20 @@ export namespace AppleMusicApi {
         } | undefined;
         type: "curators";
     }
+
+    interface AppleMusicSearchResult {
+        results: {
+          songs: {
+            href: string;
+            next: string;
+            data: Song[];
+          };
+        };
+        meta: {
+          results: {
+            order: string[];
+            rawOrder: string[];
+          };
+        };
+      }
 }
