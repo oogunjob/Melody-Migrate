@@ -130,6 +130,7 @@ declare namespace MusicKit {
     };
     // @ts-ignore bitrate is not read-only
     public bitrate: number;
+    public musicUserToken: string | null;
   }
 
   // tslint:disable-next-line:max-classes-per-file

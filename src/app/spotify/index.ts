@@ -1,20 +1,21 @@
 import { SearchResults, SpotifyApi, Playlist, Scopes } from "@spotify/web-api-ts-sdk";
+import { BaseSource } from "../types/sources";
 
 // TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
 // I would want to alert the user that the first 100 were completed, and move on to the next 100, and so on.
-
-export default class SpotifySDK {
+export default class SpotifySDK implements BaseSource {
     sdk: SpotifyApi;
+    name: string = "Spotify";
+    icon: string = "";
 
     constructor(sdk: SpotifyApi) {
-      this.sdk = sdk;
+        this.sdk = sdk;
     }
 
     // Creates the initial Spotify SDK
     public static CreateSDK()
     {
-        console.log("Got here too");
         const sdk = SpotifyApi.withUserAuthorization(process.env.NEXT_PUBLIC_CLIENT_ID ?? "", "http://localhost:3000", Scopes.all);
         return sdk;
     }
@@ -45,4 +46,19 @@ export default class SpotifySDK {
 
         return null;
     }
+
+    LogIn = async () => {
+        // Apple Music login logic here
+    };
+
+    FetchPlaylists = async (): Promise<any[]> => {
+        const userId = await this.GetUserId();
+        const playlists = this.sdk.playlists.getUsersPlaylists(userId);
+        return [];
+    };
+
+    GetPlaylistName = (playlist: any): string => {
+        // Get Apple Music playlist name logic here
+        return "";
+    };
 }

@@ -3,17 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { AppleMusicAPI } from './apple';
 import SpotifySDK from './spotify';
 import { Scopes, SpotifyApi } from '@spotify/web-api-ts-sdk';
-
-// TODO: Move this to a different file in types
-interface Source {
-  name: string;
-  image: string;
-  LogIn: () => Promise<void> | void;
-}
+import Playlists from './components/playlists';
+import { BaseSource } from './types/sources';
 
 function Home() {
-  const [instance, setInstance] = useState<AppleMusicAPI>({} as AppleMusicAPI);
+  const [musicKitInstance, setMusicKitInstance] = useState<AppleMusicAPI>({} as AppleMusicAPI);
   const [spotifySDK, setSpotifySDK] = useState<SpotifySDK>({} as SpotifySDK);
+  const [source, setSource] = React.useState<BaseSource | null | undefined>(null);
 
   // Fetch the Apple Music MusicKit instance on initial page load
   useEffect(() => {
@@ -22,31 +18,14 @@ function Home() {
       icon: 'https://raw.githubusercontent.com/Musish/Musish/assets/misc/authIcon.png'
     });
 
-    const musicKit = new AppleMusicAPI(window.MusicKit.getInstance());
-    setInstance(musicKit);
+    const musicKit = new AppleMusicAPI(window.MusicKit?.getInstance());
+    setMusicKitInstance(musicKit);
   }, []);
 
-  // TODO: Remove this and figure out a way to make it cleaner
-  function LogInToSpotify()
-  {
-    return;
-    // console.log("Got here")
-    // const sdk = SpotifySDK.CreateSDK();
-    // setSpotifySDK(new SpotifySDK(sdk))
-  }
-
   // Available sources for playlist/library retrieval
-  const sources: Source[] = [
-    {
-      name: "Apple Music",
-      image: "",
-      LogIn: () => instance.LogIn()
-    },
-    {
-      name: "Spotify",
-      image: "",
-      LogIn: () => LogInToSpotify()
-    },
+  const sources: BaseSource[] = [
+    new SpotifySDK(SpotifySDK.CreateSDK()),
+    musicKitInstance,
   ];
 
   return (
@@ -66,11 +45,18 @@ function Home() {
               <h1 className="mb-6 text-4xl font-bold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-5xl md:text-4xl lg:text-5xl md:tracking-tight">Source</h1>
             </div>
             {
-              sources.map((source, index) => (
-                <div key={index} className='py-4'>
-                  <button onClick={() => source.LogIn()}>{source.name}</button>
-                </div>)
-              )
+              source ?
+                <Playlists source={source} />
+                :
+                <div>
+                  {
+                    sources.map((source, index) => (
+                      <div key={index} className='py-4'>
+                        <button onClick={() => setSource(source)}>{source.name}</button>
+                      </div>)
+                    )
+                  }
+                </div>
             }
           </div>
           <div className="flex h-full w-full bg-gray-300 rounded-md">
