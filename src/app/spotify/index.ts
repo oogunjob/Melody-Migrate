@@ -20,7 +20,7 @@ export default class SpotifySDK implements BaseProvider {
     {
         const sdk = SpotifyApi.withUserAuthorization(
             process.env.NEXT_PUBLIC_CLIENT_ID ?? "",
-            "http://localhost:3000",
+            process.env.NEXT_PUBLIC_REDIRECT_URI ?? "",
             Scopes.all);
 
         return sdk;
@@ -59,7 +59,8 @@ export default class SpotifySDK implements BaseProvider {
             tracks.push(...results.items);
         }
 
-        return tracks.map(track => (track.track as unknown) as Track) as Track[];
+        // Filter out null tracks found in the playlist and map as Track[]
+        return tracks.filter(track => track.track != null).map(track => (track.track as unknown) as Track) as Track[];
     }
 
     // TODO: Come back and make the documentation for this look better
@@ -151,6 +152,7 @@ export default class SpotifySDK implements BaseProvider {
 
             // Search for each track in the playlist on Apple Music
             const appleMusicTracksIds: string[] = [];
+
             for (const track of tracks)
             {
                 const songId = await destination.SearchForSong(track.name, track.artists[0].name, track.album.name);

@@ -175,7 +175,7 @@ export class AppleMusicAPI implements BaseProvider {
 
     // TODO: Need to account for potential 429 errors
     SearchForSong = async (songTitle: string, artist: string, albumTitle: string, explicit: boolean = true): Promise<string> => {
-        const encodedQuery = encodeURIComponent(`${songTitle} ${artist} ${albumTitle} ${explicit ? "explicit" : "clean"}`);
+        const encodedQuery = encodeURIComponent(`${songTitle} ${artist} ${albumTitle}`);
         let api_url = this.baseUrl + `/v1/catalog/us/search?types=songs&term=${encodedQuery}&limit=3`;
 
         let songId: string = "";
@@ -193,6 +193,8 @@ export class AppleMusicAPI implements BaseProvider {
                 songId = this.FindBestMatch(response.results.songs.data, { artistName: artist, songTitle: songTitle, albumTitle: albumTitle, contentRating: explicit ? "explicit" : "clean" })
             }
             else{
+                console.log(response.results.songs)
+                console.log(encodedQuery)
                 console.log("Could not find song: " + songTitle + " by " + artist + " on Apple Music.");
             }
 
