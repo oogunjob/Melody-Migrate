@@ -2,7 +2,7 @@ import { AppleMusicApi } from "../types/apple-music-api";
 import { BaseProvider } from "../types/sources";
 
 // TODO: Rename this or make it look better
-interface MusicObject {
+interface Song {
     artistName: string;
     songTitle: string;
     albumTitle: string;
@@ -12,7 +12,7 @@ interface MusicObject {
 export class AppleMusicAPI implements BaseProvider {
     name = "Apple Music";
     icon = "apple";
-    baseUrl: string = 'https://api.music.apple.com/v1';
+    baseUrl: string = 'https://api.music.apple.com';
 
     private instance: MusicKit.MusicKitInstance | null;
     private musicKitToken: string | null = null;
@@ -74,39 +74,32 @@ export class AppleMusicAPI implements BaseProvider {
     public async FetchSongsFromPlaylist(id: string): Promise<AppleMusicApi.Song[]>
     {
         // TODO: Change the data type from any
-        const all_songs: any[] = [];
+        const songs: any[] = [];
 
-        let api_url = this.baseUrl + `/me/library/playlists/${id}/tracks`
-
-        // Time how long it takes to retrieve all songs in the selected playlist
-        var startTime = performance.now();
-        console.log(`Fetching all songs in playlist ${id}.`);
+        let api_url = this.baseUrl + `/v1/me/library/playlists/${id}/tracks`
 
         // Fetch all songs in the selected playlist
         while (api_url) {
             try {
                 // Fetch the first 25 songs in the playlist
+                // TODO: Will need to prepare for 429 errors
                 const response: AppleMusicApi.Relationship<AppleMusicApi.Playlist> = await fetch(api_url, {
                     headers: this.GetHeader()
                 }).then(response => response.json()).then(data => { return data });
 
-                all_songs.push(...response.data);
+                songs.push(...response.data);
 
                 // Update url to include new offset
+                console.log(response.next)
                 api_url = response.next ? this.baseUrl + response.next : '';
 
             } catch (error: any) {
                 console.error(`Error: ${error.message}`);
                 break;
             }
-
-            api_url = "";
         }
 
-        var endTime = performance.now();
-        console.log(`It took ${endTime - startTime} milliseconds to fetch ${all_songs.length} songs.`);
-
-        return all_songs;
+        return songs;
     }
 
     /**
@@ -116,7 +109,7 @@ export class AppleMusicAPI implements BaseProvider {
     public async FetchSongsFromLibrary(): Promise<AppleMusicApi.Song[]> {
         const all_songs: AppleMusicApi.Song[] = [];
 
-        let api_url = this.baseUrl + '/me/library/songs?offset=0';
+        let api_url = this.baseUrl + '/v1/me/library/songs?offset=0';
 
         // Time how long it takes to retrieve all songs in user library
         var startTime = performance.now();
@@ -141,13 +134,10 @@ export class AppleMusicAPI implements BaseProvider {
             }
         }
 
-        var endTime = performance.now();
-        console.log(`It took ${endTime - startTime} milliseconds to fetch ${all_songs.length} songs.`);
-
         return all_songs;
     }
 
-    private FindBestMatch(songs: AppleMusicApi.Song[], criteria: MusicObject): string {
+    private FindBestMatch(songs: AppleMusicApi.Song[], criteria: Song): string {
         let bestMatchId: string = "";
         let bestMatchScore = -1;
 
@@ -172,12 +162,12 @@ export class AppleMusicAPI implements BaseProvider {
             }
         }
 
-        const foundObject = songs.find(song => song.id === bestMatchId);
-        if (foundObject !== undefined) {
+        const song = songs.find(song => song.id === bestMatchId);
+        if (song !== undefined) {
             // console.log(`Found best match for ${criteria.songTitle} by ${criteria.artistName} with a score of ${bestMatchScore}: ${foundObject.attributes?.name} by ${foundObject.attributes?.artistName}`);
         }
         else {
-            // console.log(`Could not find best match for ${criteria.songTitle} by ${criteria.artistName}.`);
+            console.log(`Could not find best match for ${criteria.songTitle} by ${criteria.artistName}.`);
         }
 
         return bestMatchId;
@@ -186,7 +176,7 @@ export class AppleMusicAPI implements BaseProvider {
     // TODO: Need to account for potential 429 errors
     SearchForSong = async (songTitle: string, artist: string, albumTitle: string, explicit: boolean = true): Promise<string> => {
         const encodedQuery = encodeURIComponent(`${songTitle} ${artist} ${albumTitle} ${explicit ? "explicit" : "clean"}`);
-        let api_url = this.baseUrl + `/catalog/us/search?types=songs&term=${encodedQuery}&limit=3`;
+        let api_url = this.baseUrl + `/v1/catalog/us/search?types=songs&term=${encodedQuery}&limit=3`;
 
         let songId: string = "";
 
@@ -203,12 +193,14 @@ export class AppleMusicAPI implements BaseProvider {
                 songId = this.FindBestMatch(response.results.songs.data, { artistName: artist, songTitle: songTitle, albumTitle: albumTitle, contentRating: explicit ? "explicit" : "clean" })
             }
             else{
-                // console.log("Could not find song: " + songTitle + " by " + artist + " on Apple Music.");
+                console.log("Could not find song: " + songTitle + " by " + artist + " on Apple Music.");
             }
 
         } catch (error: any) {
             console.error(`Error: ${error.message}`);
         }
+
+        console.log(songId)
 
         return songId;
     }
@@ -216,11 +208,7 @@ export class AppleMusicAPI implements BaseProvider {
     FetchPlaylists = async (): Promise<any[]> => {
         const all_playlists: AppleMusicApi.Playlist[] = [];
 
-        let api_url = this.baseUrl + '/me/library/playlists?offset=0';
-
-        // Time how long it takes to retrieve all songs in user library
-        var startTime = performance.now();
-        console.log(`Fetching all playlists in user library.`);
+        let api_url = this.baseUrl + '/v1/me/library/playlists?offset=0';
 
         // Fetch all playlists in the user's library
         while (api_url) {
@@ -240,9 +228,6 @@ export class AppleMusicAPI implements BaseProvider {
                 break;
             }
         }
-
-        var endTime = performance.now();
-        console.log(`It took ${endTime - startTime} milliseconds to fetch ${all_playlists.length} playlists.`);
 
         return all_playlists;
     }
@@ -290,7 +275,7 @@ export class AppleMusicAPI implements BaseProvider {
 
     // Need to add this method to the interface, all providers should have this method
     CreatePlaylist = async (playlistName: string, tracks: string[], description: string = ""): Promise<string> => {
-        let api_url = this.baseUrl + '/me/library/playlists';
+        let api_url = this.baseUrl + '/v1/me/library/playlists';
 
         const response: AppleMusicApi.PlaylistResponse = await fetch(api_url, {
             headers: this.GetHeader(),
