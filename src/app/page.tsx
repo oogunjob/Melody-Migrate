@@ -47,12 +47,12 @@ function Home() {
     setSelectedDestination(prevDestination => prevDestination === destination ? null : destination);
   };
 
-  const HandleContinueSource = async () => {
-    const loggedIn = await selectedSource?.LogIn();
-    if (loggedIn) {
-      setSource(selectedSource);
+    const HandleContinueSource = async () => {
+        const loggedIn = await selectedSource?.LogIn();
+        if (loggedIn) {
+            setSource(selectedSource);
+        }
     }
-  }
 
   const HandleContinueDestination = async () => {
     const loggedIn = await selectedDestination?.LogIn();
@@ -60,8 +60,6 @@ function Home() {
       setDestination(selectedDestination);
     }
   }
-
-  // TODO: Need to handle Spotify Liked Songs Library and Apple Music Added Songs Library
 
   const HandleTransfer = async () => {
     switch (destination?.name) {
