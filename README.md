@@ -1,4 +1,4 @@
-# Universal Music Library Transfer 🎶🔄🎶
+# Universal Music Library Transfer 🎶🔄
 
 Are you thinking about switching music streaming services but worried about losing all your music?
 
