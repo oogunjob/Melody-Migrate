@@ -6,13 +6,13 @@ function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source
     const [playlists, setPlaylists] = React.useState<any[]>([]);
 
     useEffect(() => {
-        async function RetrievePlaylists() {
+        async function GetPlaylists() {
             const retrievedPlaylists = await source.GetPlaylists();
             setPlaylists(retrievedPlaylists);
             setIsLoaded(true);
         }
 
-        RetrievePlaylists();
+        GetPlaylists();
     }, []);
 
     const HandleSelectPlaylist = (playlist: any) => {
