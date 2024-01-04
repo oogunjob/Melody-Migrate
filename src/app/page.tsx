@@ -61,8 +61,6 @@ function Home() {
     }
   }
 
-  // TODO: Need to handle Spotify Liked Songs Library and Apple Music Added Songs Library
-
   const HandleTransfer = async () => {
     switch (destination?.name) {
         case "Spotify":

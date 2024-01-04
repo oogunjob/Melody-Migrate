@@ -1,8 +1,7 @@
 import { AppleMusicApi } from "../types/apple-music-api";
-import { BaseProvider } from "../types/sources";
+import { BaseProvider, UserLibrary } from "../types/sources";
 
-// TODO: Rename this or make it look better
-interface Song {
+interface SongCriteria {
     artistName: string;
     songTitle: string;
     albumTitle: string;
@@ -18,8 +17,8 @@ export class AppleMusicAPI implements BaseProvider {
     private musicKitToken: string | null = null;
 
     constructor(instance: MusicKit.MusicKitInstance) {
-      this.instance = instance;
-      this.musicKitToken = instance?.musicUserToken;
+        this.instance = instance;
+        this.musicKitToken = instance?.musicUserToken;
     }
 
     /**
@@ -71,12 +70,12 @@ export class AppleMusicAPI implements BaseProvider {
      * @param id Apple Music playlist id
      * @returns array of songs
      */
-    public async FetchSongsFromPlaylist(id: string): Promise<AppleMusicApi.Song[]>
+    GetSongsFromPlaylist = async (playlistId: string): Promise<any[]> =>
     {
         // TODO: Change the data type from any
         const songs: any[] = [];
 
-        let api_url = this.baseUrl + `/v1/me/library/playlists/${id}/tracks`
+        let api_url = this.baseUrl + `/v1/me/library/playlists/${playlistId}/tracks`
 
         // Fetch all songs in the selected playlist
         while (api_url) {
@@ -106,14 +105,10 @@ export class AppleMusicAPI implements BaseProvider {
      * Fetch all songs in the user's library
      * @returns array of songs
      */
-    public async FetchSongsFromLibrary(): Promise<AppleMusicApi.Song[]> {
-        const all_songs: AppleMusicApi.Song[] = [];
+    public async GetSongsFromLibrary(): Promise<AppleMusicApi.Song[]> {
+        const songs: AppleMusicApi.Song[] = [];
 
         let api_url = this.baseUrl + '/v1/me/library/songs?offset=0';
-
-        // Time how long it takes to retrieve all songs in user library
-        var startTime = performance.now();
-        console.log(`Fetching all songs in user library.`);
 
         // Fetch all songs in the user's library
         while (api_url) {
@@ -123,7 +118,7 @@ export class AppleMusicAPI implements BaseProvider {
                     headers: this.GetHeader()
                 }).then(response => response.json()).then(data => { return data });
 
-                all_songs.push(...response.data);
+                songs.push(...response.data);
 
                 // Update url to include new offset
                 api_url = response.next ? this.baseUrl + response.next : '';
@@ -134,10 +129,16 @@ export class AppleMusicAPI implements BaseProvider {
             }
         }
 
-        return all_songs;
+        return songs;
     }
 
-    private FindBestMatch(songs: AppleMusicApi.Song[], criteria: Song): string {
+    /**
+     * Finds the best match for the song based on the criteria
+     * @param songs array of songs to search through
+     * @param criteria criteria to match against
+     * @returns the id of the best match
+     */
+    private FindBestMatch(songs: AppleMusicApi.Song[], criteria: SongCriteria): string {
         let bestMatchId: string = "";
         let bestMatchScore = -1;
 
@@ -145,14 +146,17 @@ export class AppleMusicAPI implements BaseProvider {
         {
             let currentScore = 0;
 
+            // Score the matched song based on comparison to the criteria
             if (song.attributes?.name === criteria.songTitle) {
                 currentScore += 4;
             }
             if (song.attributes?.artistName === criteria.artistName) {
                 currentScore += 3;
-            } if (song.attributes?.contentRating === criteria.contentRating) {
+            }
+            if (song.attributes?.contentRating === criteria.contentRating) {
                 currentScore += 2;
-            } if (song.attributes?.albumName === criteria.albumTitle) {
+            }
+            if (song.attributes?.albumName === criteria.albumTitle) {
                 currentScore += 1;
             }
 
@@ -174,6 +178,14 @@ export class AppleMusicAPI implements BaseProvider {
     }
 
     // TODO: Need to account for potential 429 errors
+    /**
+     * Searches for a song on Apple Music
+     * @param songTitle the title of the song
+     * @param artist the artist of the song
+     * @param albumTitle the title of the album
+     * @param explicit whether or not the song is explicit
+     * @returns the id of the song if found, empty string otherwise
+     */
     SearchForSong = async (songTitle: string, artist: string, albumTitle: string, explicit: boolean = true): Promise<string> => {
         const encodedQuery = encodeURIComponent(`${songTitle} ${artist} ${albumTitle}`);
         let api_url = this.baseUrl + `/v1/catalog/us/search?types=songs&term=${encodedQuery}&limit=3`;
@@ -186,15 +198,11 @@ export class AppleMusicAPI implements BaseProvider {
                 headers: this.GetHeader(),
             }).then(response => response.json()).then(data => { return data });
 
-            // TODO: NEED TO FIGURE OUT HOW TO HANDLE THE CASE WHERE THERE ARE NO RESULTS
-            // THE RESULTS SHOW UP ON APPLE MUSIC BUT NOT IN THE API RESPONSE
-            // MAY NEED TO IMPROVE THE SEARCH QUERY
+            // Find the best match for the song if it exists
             if (response.results.songs && response.results.songs.data !== undefined) {
                 songId = this.FindBestMatch(response.results.songs.data, { artistName: artist, songTitle: songTitle, albumTitle: albumTitle, contentRating: explicit ? "explicit" : "clean" })
             }
             else{
-                console.log(response.results.songs)
-                console.log(encodedQuery)
                 console.log("Could not find song: " + songTitle + " by " + artist + " on Apple Music.");
             }
 
@@ -202,13 +210,16 @@ export class AppleMusicAPI implements BaseProvider {
             console.error(`Error: ${error.message}`);
         }
 
-        console.log(songId)
-
         return songId;
     }
 
-    FetchPlaylists = async (): Promise<any[]> => {
-        const all_playlists: AppleMusicApi.Playlist[] = [];
+    /**
+     * Gets all the playlists from the user's Apple Music account
+     * @returns an array of playlists
+     */
+    GetPlaylists = async (): Promise<any[]> => {
+        const playlists: (AppleMusicApi.Playlist | UserLibrary)[] = [];
+        playlists.push({ id: "library", name: "Yur Library", description: "Apple Music library" });
 
         let api_url = this.baseUrl + '/v1/me/library/playlists?offset=0';
 
@@ -220,7 +231,7 @@ export class AppleMusicAPI implements BaseProvider {
                     headers: this.GetHeader()
                 }).then(response => response.json()).then(data => { return data });
 
-                all_playlists.push(...response.data);
+                playlists.push(...response.data);
 
                 // Update url to include new offset
                 api_url = response.next ? this.baseUrl + response.next : '';
@@ -231,13 +242,27 @@ export class AppleMusicAPI implements BaseProvider {
             }
         }
 
-        return all_playlists;
+        return playlists;
     }
 
+    /**
+     * Gets the name of the playlist from Apple Music provider
+     * @param playlist the playlist
+     * @returns the name of the playlist
+     */
     GetPlaylistName = (playlist: any): string => {
+        if (playlist.id === "library") {
+            return "Your Library";
+        }
+
         return playlist?.attributes?.name;
     }
 
+    /**
+     * Transfers the playlists from Apple Music to Apple Music
+     * @param destination Apple Music provider that the playlists will be transfered to
+     * @param playlists playlists to transfer
+     */
     TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
         throw new Error("Cannot transfer to Apple Music from Apple Music provider.");
     }
@@ -254,13 +279,14 @@ export class AppleMusicAPI implements BaseProvider {
         {
             // Get all tracks in the playlist
             // Need to make sure that I get all of the tracks in the playlist, currently only gets the first 50 tracks
-            const tracks = await this.FetchSongsFromPlaylist(playlist.id);
+            const tracks = await this.GetSongsFromPlaylist(playlist.id);
 
             // Search for each track in the playlist on Spotify
             const spotifyTracksIds: string[] = [];
             for (const track of tracks)
             {
-                const songId = await destination.SearchForSong(track.attributes?.name, track.attributes?.artistName, track.attributes?.albumName, track.attributes?.contentRating === "explicit");
+                const isExplicit = track.attributes?.contentRating === "explicit";
+                const songId = await destination.SearchForSong(track.attributes?.name ?? "", track.attributes?.artistName ?? "", track.attributes?.albumName ?? "", isExplicit);
 
                 // Push the song id to the array if it was found on Spotify
                 if (songId)
@@ -275,9 +301,15 @@ export class AppleMusicAPI implements BaseProvider {
         }
     }
 
-    // Need to add this method to the interface, all providers should have this method
+    /**
+     * Creates a playlist on Apple Music
+     * @param playlistName the name of the playlist
+     * @param tracks the tracks to add to the playlist
+     * @param description the description of the playlist
+     * @returns the id of the playlist
+     */
     CreatePlaylist = async (playlistName: string, tracks: string[], description: string = ""): Promise<string> => {
-        let api_url = this.baseUrl + '/v1/me/library/playlists';
+        const api_url = this.baseUrl + '/v1/me/library/playlists';
 
         const response: AppleMusicApi.PlaylistResponse = await fetch(api_url, {
             headers: this.GetHeader(),

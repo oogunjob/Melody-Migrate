@@ -1,10 +1,11 @@
-import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track, PlaylistedTrack, MaxInt } from "@spotify/web-api-ts-sdk";
-import { BaseProvider } from "../types/sources";
+import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track, PlaylistedTrack, MaxInt, User, SavedTrack } from "@spotify/web-api-ts-sdk";
+import { BaseProvider, UserLibrary } from "../types/sources";
 
 // TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
 // I would want to alert the user that the first 100 were completed, and move on to the next 100, and so on.
 export default class SpotifySDK implements BaseProvider {
+
     sdk: SpotifyApi;
     name: string = "Spotify";
     icon: string = "";
@@ -32,17 +33,10 @@ export default class SpotifySDK implements BaseProvider {
         return user.id;
     }
 
-    // TODO: May need to make this a method on the instance
-    /**
-     * Gets all of the songs in a playlist
-     * @param playlistId the id of the playlist
-     * @returns an array of all tracks in the playlist
-     */
-    private async GetPlaylistSongs(playlistId: string): Promise<Track[]>
-    {
-        const tracks: any[] = [];
+    GetSongsFromLibrary = async (): Promise<any[]> =>{
+        const tracks: SavedTrack[] = [];
 
-        let results: Page<PlaylistedTrack> = await this.sdk.playlists.getPlaylistItems(playlistId, "US");
+        let results: Page<SavedTrack> = await this.sdk.currentUser.tracks.savedTracks();
         tracks.push(...results.items);
 
         while(results.next)
@@ -55,15 +49,52 @@ export default class SpotifySDK implements BaseProvider {
             const offset: number = parseInt(urlParams.get('offset') ?? "100");
             const limit: MaxInt<50> = parseInt(urlParams.get('limit') ?? "100") as MaxInt<50>;
 
-            results = await this.sdk.playlists.getPlaylistItems(playlistId, "US", undefined, limit, offset);
+            results = await this.sdk.currentUser.tracks.savedTracks(limit, offset);
             tracks.push(...results.items);
+        }
+
+        return tracks;
+    }
+
+    /**
+     * Gets all of the songs in a playlist
+     * @param playlistId the id of the playlist
+     * @returns an array of all tracks in the playlist
+     */
+    GetSongsFromPlaylist = async (playlistId: string): Promise<any[]> =>
+    {
+        const tracks: any[] = [];
+
+        if (playlistId === "library")
+        {
+            // Get the user's library
+            const songs = await this.GetSongsFromLibrary();
+            tracks.push(...songs);
+        }
+        else
+        {
+            let results: Page<PlaylistedTrack> = await this.sdk.playlists.getPlaylistItems(playlistId, "US");
+            tracks.push(...results.items);
+
+            while(results.next)
+            {
+                // Extract the query string from the URL
+                const queryString = results.next.split('?')[1];
+                const urlParams = new URLSearchParams(queryString);
+
+                // Get offset and limit from the url
+                const offset: number = parseInt(urlParams.get('offset') ?? "100");
+                const limit: MaxInt<50> = parseInt(urlParams.get('limit') ?? "100") as MaxInt<50>;
+
+                results = await this.sdk.playlists.getPlaylistItems(playlistId, "US", undefined, limit, offset);
+                tracks.push(...results.items);
+            }
         }
 
         // Filter out null tracks found in the playlist and map as Track[]
         return tracks.filter(track => track.track != null).map(track => (track.track as unknown) as Track) as Track[];
     }
 
-    // TODO: Come back and make the documentation for this look better
     /**
      * Searches for a song on Spotify
      * @param artist the artist of the song
@@ -113,15 +144,22 @@ export default class SpotifySDK implements BaseProvider {
         return true;
     };
 
-    // TODO: Need to add the library here as well
     /**
      * Gets the playlists from the user's Spotify account
+     * This method also adds a playlist that represents the user's library
      * @returns an array of playlists
      */
-    FetchPlaylists = async (): Promise<any[]> => {
+    GetPlaylists = async (): Promise<any[]> => {
+        const playlists: (Playlist | UserLibrary)[] = [];
+
         const userId: string = await this.GetUserId();
-        const playlists: Page<Playlist> = await this.sdk.playlists.getUsersPlaylists(userId);
-        return playlists.items;
+        const user_playlists: Page<Playlist> = await this.sdk.playlists.getUsersPlaylists(userId);
+
+        // Add a playlist that represents the user's library and add all of the user's playlists
+        playlists.push({ id: "library", name: "Liked Songs", description: "Spotify Liked Songs" });
+        playlists.push(...user_playlists.items);
+
+        return playlists;
     };
 
     /**
@@ -148,14 +186,14 @@ export default class SpotifySDK implements BaseProvider {
         for (const playlist of spotifyPlaylists)
         {
             // Get all tracks in the playlist
-            const tracks: Track[] = await this.GetPlaylistSongs(playlist.id);
+            const tracks: Track[] = await this.GetSongsFromPlaylist(playlist.id);
 
             // Search for each track in the playlist on Apple Music
             const appleMusicTracksIds: string[] = [];
 
             for (const track of tracks)
             {
-                const songId = await destination.SearchForSong(track.name, track.artists[0].name, track.album.name);
+                const songId = await destination.SearchForSong(track.name, track.artists[0].name, track.album.name, track.explicit);
 
                 // Push the song id to the array if it was found on Apple Music
                 if (songId)

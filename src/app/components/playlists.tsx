@@ -1,13 +1,13 @@
 import React,{ useEffect, Dispatch, SetStateAction } from 'react';
-import { BaseSource } from '../types/sources';
+import { BaseProvider } from '../types/sources';
 
-function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source: BaseSource, selectedPlaylists: any[], setSelectedPlaylists: Dispatch<SetStateAction<any[]>> }) {
+function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source: BaseProvider, selectedPlaylists: any[], setSelectedPlaylists: Dispatch<SetStateAction<any[]>> }) {
     const [isLoaded, setIsLoaded] = React.useState<boolean>(false);
     const [playlists, setPlaylists] = React.useState<any[]>([]);
 
     useEffect(() => {
         async function RetrievePlaylists() {
-            const retrievedPlaylists = await source.FetchPlaylists();
+            const retrievedPlaylists = await source.GetPlaylists();
             setPlaylists(retrievedPlaylists);
             setIsLoaded(true);
         }
