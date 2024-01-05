@@ -6,6 +6,7 @@ Are you thinking about switching music streaming services but worried about losi
 
 ## ✨ Features
 
+- **NO LIMIT** 🙅🏽‍♂️ on the number of songs that you can trasfer per playlist or library!
 - Transfer playlists between music streaming platforms
 - Completely sync libraries between music streaming platforms
 

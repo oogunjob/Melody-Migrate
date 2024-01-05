@@ -10,7 +10,7 @@ interface SongCriteria {
 
 export class AppleMusicAPI implements BaseProvider {
     name = "Apple Music";
-    icon = "apple";
+    icon = "apple_music_icon.png";
     baseUrl: string = 'https://api.music.apple.com';
 
     private instance: MusicKit.MusicKitInstance | null;
