@@ -138,14 +138,16 @@ function Home() {
                     <div>
                       <div>
                         <DefaultButton
-                            onClick={() => setSelectedOption('transfer')}
-                            disabled={false}
-                            text='Transfer Playlists From Source' />
-
-
-
-                        <button onClick={() => setSelectedOption('transfer')}>Transfer Playlists From Source</button></div>
-                      <button onClick={() => setSelectedOption('sync')}>Sync Libraries</button>
+                          onClick={() => setSelectedOption('transfer')}
+                          disabled={false}
+                          text='Transfer Playlists From Source'
+                        />
+                      </div>
+                      <DefaultButton
+                          onClick={() => setSelectedOption('sync')}
+                          disabled={false}
+                          text='Sync Libraries'
+                        />
                     </div>
                   )}
 
@@ -162,7 +164,6 @@ function Home() {
                   )}
 
                 </div>
-                // <button onClick={HandleTransfer}>{!isTransfered ? 'Transfer' : 'Successfully transfered'}</button>
                 :
                 // Display destination to select
                 <div>
@@ -186,7 +187,6 @@ function Home() {
                   />
                 </div>
             }
-
             <button onClick={() => LogWhatIWant()}>Bobby</button>
           </div>
         </div>

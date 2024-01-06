@@ -1,25 +1,38 @@
-import React, { useEffect, Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { BaseProvider } from '../types/sources';
 
 function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source: BaseProvider, selectedPlaylists: any[], setSelectedPlaylists: Dispatch<SetStateAction<any[]>> }) {
-    const [playlists, setPlaylists] = React.useState<any[]>([]);
     const [isLoaded, setIsLoaded] = React.useState<boolean>(false);
+    const [playlists, setPlaylists] = React.useState<any[]>([]);
 
     useEffect(() => {
         async function GetPlaylists() {
             const retrievedPlaylists = await source.GetPlaylists();
-            setPlaylists(retrievedPlaylists);
+            const playlists = retrievedPlaylists.map((item, index) => ({ ...item, key: index + 1 }));
+            setPlaylists(playlists);
             setIsLoaded(true);
         }
 
         GetPlaylists();
     }, []);
 
-    const HandleSelectPlaylist = (playlist: any) => {
-        if (selectedPlaylists.includes(playlist)) {
-            setSelectedPlaylists(selectedPlaylists.filter((p) => p !== playlist));
+    const handleToggleAll = () => {
+        if (selectedPlaylists.length === playlists.length) {
+            // All options are selected, clear selection
+            setSelectedPlaylists([]);
         } else {
-            setSelectedPlaylists([...selectedPlaylists, playlist]);
+            // Not all options are selected, select all
+            setSelectedPlaylists(playlists.map((playlist) => playlist.key));
+        }
+    };
+
+    const handleToggleOption = (key: number) => {
+        if (selectedPlaylists.includes(key)) {
+            // Option is selected, unselect it
+            setSelectedPlaylists(selectedPlaylists.filter((selectedId) => selectedId !== key));
+        } else {
+            // Option is not selected, select it
+            setSelectedPlaylists([...selectedPlaylists, key]);
         }
     };
 
@@ -36,25 +49,27 @@ function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source
 
     return (
         <div>
-            {!isLoaded && <div>Loading...</div>}
-            {isLoaded &&
-                playlists.map((playlist, index) => (
-                    <div
-                        key={index}
-                        onClick={() => HandleSelectPlaylist(playlist)}
-                        style={{
-                            border: '1px solid black',
-                            padding: '10px',
-                            margin: '10px',
-                            backgroundColor: selectedPlaylists.includes(playlist) ? 'lightblue' : 'white',
-                        }}
-                        className='cursor-pointer'
-                    >
-                        <h1>{source.GetPlaylistName(playlist)}</h1>
-                    </div>
+            <label>
+                <input type="checkbox" checked={selectedPlaylists.length === playlists.length} onChange={handleToggleAll} />
+                Select All
+            </label>
+
+            <ul>
+                {playlists.map((playlist) => (
+                    <li key={playlist.key}>
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={selectedPlaylists.includes(playlist.key)}
+                                onChange={() => handleToggleOption(playlist.key)}
+                            />
+                            {source.GetPlaylistName(playlist)}
+                        </label>
+                    </li>
                 ))}
+            </ul>
         </div>
     );
-}
+};
 
 export default Playlists;

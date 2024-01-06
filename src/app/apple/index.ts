@@ -226,7 +226,7 @@ export class AppleMusicAPI implements BaseProvider {
      */
     GetPlaylists = async (): Promise<any[]> => {
         const playlists: (AppleMusicApi.Playlist | UserLibrary)[] = [];
-        playlists.push({ id: "library", name: "Yur Library", description: "Apple Music library" });
+        playlists.push({ id: "library", name: "Your Library", description: "Apple Music library" });
 
         let api_url = this.baseUrl + '/v1/me/library/playlists?offset=0';
 
