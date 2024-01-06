@@ -9,7 +9,12 @@ function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source
         async function GetPlaylists() {
             const retrievedPlaylists = await source.GetPlaylists();
             const playlists = retrievedPlaylists.map((item, index) => ({ ...item, key: index + 1 }));
+
+            // Set the playlists and selected playlists
             setPlaylists(playlists);
+            setSelectedPlaylists(playlists.map((playlist) => playlist.key));
+
+            // Set the loaded state
             setIsLoaded(true);
         }
 
@@ -54,20 +59,19 @@ function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source
                 Select All
             </label>
 
-            <ul>
+            <div className="flex flex-wrap">
                 {playlists.map((playlist) => (
-                    <li key={playlist.key}>
-                        <label>
-                            <input
-                                type="checkbox"
-                                checked={selectedPlaylists.includes(playlist.key)}
-                                onChange={() => handleToggleOption(playlist.key)}
-                            />
+                    <div
+                        key={playlist.key}
+                        className={`m-2 w-32 h-32 border-2 cursor-pointer flex items-center justify-center ${selectedPlaylists.includes(playlist.key) ? 'bg-blue-300' : 'bg-white'}`}
+                        onClick={() => handleToggleOption(playlist.key)}
+                    >
+                        <label className="cursor-pointer">
                             {source.GetPlaylistName(playlist)}
                         </label>
-                    </li>
+                    </div>
                 ))}
-            </ul>
+            </div>
         </div>
     );
 };

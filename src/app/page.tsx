@@ -38,14 +38,25 @@ function Home() {
 
   // const [loading, setLoading] = useState(true); // Use this to show the loading of the providers
 
+  /**
+   * Handles the selection of the source provider
+   * @param source The source provider
+   */
   const handleSourceSelection = (source: BaseProvider) => {
     setSelectedSource(prevSource => prevSource && prevSource.name === source.name ? null : source);
   };
 
+  /**
+   * Handles the selection of the destination provider
+   * @param destination The destination provider
+   */
   const handleDestinationSelection = (destination: BaseProvider) => {
     setSelectedDestination(prevDestination => prevDestination && prevDestination.name === destination.name ? null : destination);
   };
 
+  /**
+   * Handles logging in to the source provider
+   */
   const handleContinueSource = async () => {
     const loggedIn = await selectedSource?.LogIn();
     if (loggedIn) {
@@ -53,6 +64,9 @@ function Home() {
     }
   }
 
+  /**
+   * Handles logging in to the destination provider
+   */
   const handleContinueDestination = async () => {
     const loggedIn = await selectedDestination?.LogIn();
     if (loggedIn) {
@@ -61,27 +75,39 @@ function Home() {
     }
   }
 
-  const HandleTransfer = async () => {
-    switch (destination?.name) {
-      case "Spotify":
-        await source?.TransferPlaylistsToSpotify(destination, selectedPlaylists);
-        break;
-      case "Apple Music":
-        await source?.TransferPlaylistsToAppleMusic(destination, selectedPlaylists);
-        break;
-      default:
-        break;
+  /**
+   * Handles the transfer of the playlists from the source to the destination
+   */
+  const HandleTransfer = async (option: string) => {
+    if (option === 'sync') {
+
+    }
+
+    if (option === 'transfer') {
+
+      if (selectedPlaylists.length === 0) {
+        alert('Please select at least one playlist to transfer');
+        return;
+      }
+
+      console.log(selectedPlaylists);
+
+      setSelectedOption('transfer');
+
+      switch (destination?.name) {
+        case "Spotify":
+          await source?.TransferPlaylistsToSpotify(destination, selectedPlaylists);
+          break;
+        case "Apple Music":
+          await source?.TransferPlaylistsToAppleMusic(destination, selectedPlaylists);
+          break;
+        default:
+          break;
+      }
     }
 
     // TODO: TransferPlaylistsToSpotify and TransferPlaylistsToAppleMusic should return a boolean
     setIsTransfered(true);
-  }
-
-  function LogWhatIWant(): void {
-    console.log(source);
-    console.log(selectedDestination);
-    console.log(!source && selectedDestination === null);
-
   }
 
   return (
@@ -138,7 +164,7 @@ function Home() {
                     <div>
                       <div>
                         <DefaultButton
-                          onClick={() => setSelectedOption('transfer')}
+                          onClick={() => HandleTransfer('transfer')}
                           disabled={false}
                           text='Transfer Playlists From Source'
                         />
@@ -187,7 +213,6 @@ function Home() {
                   />
                 </div>
             }
-            <button onClick={() => LogWhatIWant()}>Bobby</button>
           </div>
         </div>
       </section>
