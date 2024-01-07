@@ -10,13 +10,13 @@ interface Playlist {
   // ... other properties
 }
 
-function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source: BaseProvider, selectedPlaylists: Playlist[], setSelectedPlaylists: Dispatch<SetStateAction<Playlist[]>> }) {
+function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { provider: BaseProvider, selectedPlaylists: Playlist[], setSelectedPlaylists: Dispatch<SetStateAction<Playlist[]>> }) {
   const [isLoaded, setIsLoaded] = React.useState<boolean>(false);
   const [playlists, setPlaylists] = React.useState<Playlist[]>([]);
 
   useEffect(() => {
     async function GetPlaylists() {
-      const retrievedPlaylists = await source.GetPlaylists();
+      const retrievedPlaylists = await provider.GetPlaylists();
       const playlists = retrievedPlaylists.map((item, index) => ({ ...item, key: index + 1 }));
 
       // Set the playlists and selected playlists
@@ -81,7 +81,7 @@ function Playlists({ source, selectedPlaylists, setSelectedPlaylists }: { source
             }`}
             onClick={() => handleToggleOption(playlist)}
           >
-            <label className="cursor-pointer">{source.GetPlaylistName(playlist)}</label>
+            <label className="cursor-pointer">{provider.GetPlaylistName(playlist)}</label>
           </div>
         ))}
       </div>

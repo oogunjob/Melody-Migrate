@@ -15,7 +15,10 @@ function Home() {
   const [destination, setDestination] = useState<BaseProvider | null | undefined>(null);
   const [selectedSource, setSelectedSource] = useState<BaseProvider | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<BaseProvider | null>(null);
-  const [selectedPlaylists, setSelectedPlaylists] = useState<any[]>([]);
+  const [selectedSourcePlaylists, setSelectedSourcePlaylists] = useState<any[]>([]);
+
+  const [selectedDestinationPlaylists, setSelectedDestinationPlaylists] = useState<any[]>([]);
+
   const [providers, setProviders] = useState<BaseProvider[]>([]);
   const [isTransfered, setIsTransfered] = useState<Boolean>(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -80,26 +83,33 @@ function Home() {
    */
   const HandleTransfer = async (option: string) => {
     if (option === 'sync') {
+      const source1 = new Set(selectedSourcePlaylists.map((playlist) => source?.GetPlaylistName(playlist) ?? ""));
+      const destination1 = new Set(selectedDestinationPlaylists.map((playlist) => destination?.GetPlaylistName(playlist) ?? ""));
 
+      const missingInSource: string[] = [...new Set([...destination1].filter(x => !source1.has(x)))];
+      const missingInDestination: string[] = [...new Set([...source1].filter(x => !destination1.has(x)))];
+
+      console.log("The following are missing in the source: ", missingInSource);
+      console.log("The following are missing in the destination: ", missingInDestination);
     }
 
     if (option === 'transfer') {
 
-      if (selectedPlaylists.length === 0) {
+      if (selectedSourcePlaylists.length === 0) {
         alert('Please select at least one playlist to transfer');
         return;
       }
 
-      console.log(selectedPlaylists);
+      console.log(selectedSourcePlaylists);
 
       setSelectedOption('transfer');
 
       switch (destination?.name) {
         case "Spotify":
-          await source?.TransferPlaylistsToSpotify(destination, selectedPlaylists);
+          await source?.TransferPlaylistsToSpotify(destination, selectedSourcePlaylists);
           break;
         case "Apple Music":
-          await source?.TransferPlaylistsToAppleMusic(destination, selectedPlaylists);
+          await source?.TransferPlaylistsToAppleMusic(destination, selectedSourcePlaylists);
           break;
         default:
           break;
@@ -131,7 +141,10 @@ function Home() {
             {
               source ?
                 // Display playlists to select and transfer
-                <Playlists source={source} selectedPlaylists={selectedPlaylists} setSelectedPlaylists={setSelectedPlaylists} />
+                <Playlists
+                  provider={source}
+                  selectedPlaylists={selectedSourcePlaylists}
+                  setSelectedPlaylists={setSelectedSourcePlaylists} />
                 :
                 // Display sources to select
                 <div>
@@ -185,7 +198,11 @@ function Home() {
 
                   {selectedOption === 'sync' && (
                     <div>
-                      You've decided to sync your libraries
+                      <Playlists
+                        provider={destination}
+                        selectedPlaylists={selectedDestinationPlaylists}
+                        setSelectedPlaylists={setSelectedDestinationPlaylists} />
+                        <button onClick={() => HandleTransfer('sync')}>Sync</button>
                     </div>
                   )}
 
