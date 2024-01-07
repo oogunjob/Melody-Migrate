@@ -5,10 +5,9 @@ import { BaseProvider, UserLibrary } from "../types/sources";
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
 // I would want to alert the user that the first 100 were completed, and move on to the next 100, and so on.
 export default class SpotifySDK implements BaseProvider {
-
     sdk: SpotifyApi;
     name: string = "Spotify";
-    icon: string = "";
+    icon: string = "spotify_icon.png";
 
     private maxTracksPerPlaylist: number = 100;
 
@@ -22,7 +21,7 @@ export default class SpotifySDK implements BaseProvider {
         const sdk = SpotifyApi.withUserAuthorization(
             process.env.NEXT_PUBLIC_CLIENT_ID ?? "",
             process.env.NEXT_PUBLIC_REDIRECT_URI ?? "",
-            Scopes.all);
+            Scopes.all); // TODO: Update this to only request the scopes that are needed
 
         return sdk;
     }

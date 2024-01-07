@@ -10,7 +10,7 @@ interface SongCriteria {
 
 export class AppleMusicAPI implements BaseProvider {
     name = "Apple Music";
-    icon = "apple";
+    icon = "apple_music_icon.png";
     baseUrl: string = 'https://api.music.apple.com';
 
     private instance: MusicKit.MusicKitInstance | null;
@@ -226,7 +226,7 @@ export class AppleMusicAPI implements BaseProvider {
      */
     GetPlaylists = async (): Promise<any[]> => {
         const playlists: (AppleMusicApi.Playlist | UserLibrary)[] = [];
-        playlists.push({ id: "library", name: "Yur Library", description: "Apple Music library" });
+        playlists.push({ id: "library", name: "Your Library", description: "Apple Music library" });
 
         let api_url = this.baseUrl + '/v1/me/library/playlists?offset=0';
 
