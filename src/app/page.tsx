@@ -130,9 +130,45 @@ function Home() {
           </div>
         </div>
       </section>
+
+      <div className="h-full w-full bg-white flex flex-col items-center justify-center">
+        <div className="sm:flex sm:justify-center sm:space-x-4 bg-white ">
+          <div className="relative">
+            <div className="text-center mb-4">Source</div>
+            <div className="w-[554px] h-[607px] bg-gray-300 rounded-3xl">
+              <div className="flex-1 border-b-2 border-blue-500">Source</div>
+              <div className="flex-1 border-b-2 border-blue-500">Providers Here</div>
+              <div className="flex-1">Continue Button Here</div>
+            </div>
+          </div>
+          <div className="sm:relative bg-white sm:flex sm:flex-col">
+            <div className="text-center mb-4">Destination</div>
+            <div className="w-[554px] h-[607px] bg-gray-300 rounded-3xl">
+              <div className="flex-1 border-b-2 border-blue-500">Destination</div>
+              <div className="flex-1 border-b-2 border-blue-500">Providers Here</div>
+              <div className="flex-1">Continue Button Here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
       <section className="h-[676px] w-full bg-white tails-selected-element">
         {/* <div className="max-w-7xl px-5 flex space-x-5 w-full h-full items-center justify-center mx-auto"> */}
-        <div className="h-[607px] w-[607px] drop-shadow-xl bg-gray-300 rounded-3xl">
+        <div className="h-[607px] w-[554px] drop-shadow-xl bg-gray-300 rounded-3xl">
           <div>
             <h1 className="mb-6 text-4xl font-bold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-5xl md:text-4xl lg:text-5xl md:tracking-tight">
               Source
