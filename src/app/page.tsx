@@ -123,52 +123,52 @@ function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
       <section className="h-auto w-full bg-white tails-selected-element">
-        <div className="px-10 py-24 mx-auto max-w-7xl">
+        <div className="px-10 py-20 mx-auto max-w-7xl">
           <div className="w-full mx-auto text-left md:text-center">
             <h1 className="mb-6 text-5xl font-extrabold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-6xl md:text-6xl lg:text-7xl md:tracking-tight"> Open Source <span className="w-full text-transparent bg-clip-text bg-gradient-to-r from-green-400 via-blue-500 to-purple-500 lg:inline">Universal Music Library Transfer</span><br className="lg:block hidden" /></h1>
             <p className="px-0 mb-6 text-gray-600 text-lg lg:px-24">Transfer your music library from one platform to another and vice versa with <span className='font-bold'>NO SONG LIMIT.</span> Currently supports Apple Music, Spotify, and more to come! Begin by selecting your source music streaming service.</p>
           </div>
         </div>
       </section>
-      <section className="h-[640px] w-full bg-white tails-selected-element">
-        <div className="max-w-7xl px-5 flex space-x-5 w-full h-full items-center justify-center mx-auto">
-          <div className="h-full w-full bg-gray-300 rounded-md">
-            <div>
-              <h1 className="mb-6 text-4xl font-bold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-5xl md:text-4xl lg:text-5xl md:tracking-tight">
-                Source
-              </h1>
-            </div>
-            {
-              source ?
-                // Display playlists to select and transfer
-                <Playlists
-                  provider={source}
-                  selectedPlaylists={selectedSourcePlaylists}
-                  setSelectedPlaylists={setSelectedSourcePlaylists} />
-                :
-                // Display sources to select
-                <div>
-                  {
-                    providers.map((source, index) => (
-                      <div key={index}>
-                        <Provider
-                          disabled={false}
-                          provider={source}
-                          isSelected={source.name === selectedSource?.name}
-                          onClick={() => handleSourceSelection(source)}
-                        />
-                      </div>
-                    ))
-                  }
-                  <DefaultButton
-                    onClick={handleContinueSource}
-                    disabled={selectedSource === null}
-                    text='Continue'
-                  />
-                </div>
-            }
+      <section className="h-[676px] w-full bg-white tails-selected-element">
+        {/* <div className="max-w-7xl px-5 flex space-x-5 w-full h-full items-center justify-center mx-auto"> */}
+        <div className="h-[607px] w-[607px] drop-shadow-xl bg-gray-300 rounded-3xl">
+          <div>
+            <h1 className="mb-6 text-4xl font-bold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-5xl md:text-4xl lg:text-5xl md:tracking-tight">
+              Source
+            </h1>
           </div>
-          <div className="h-full w-full bg-gray-300 rounded-md">
+          {
+            source ?
+              // Display playlists to select and transfer
+              <Playlists
+                provider={source}
+                selectedPlaylists={selectedSourcePlaylists}
+                setSelectedPlaylists={setSelectedSourcePlaylists} />
+              :
+              // Display sources to select
+              <div>
+                {
+                  providers.map((source, index) => (
+                    <div key={index}>
+                      <Provider
+                        disabled={false}
+                        provider={source}
+                        isSelected={source.name === selectedSource?.name}
+                        onClick={() => handleSourceSelection(source)}
+                      />
+                    </div>
+                  ))
+                }
+              </div>
+          }
+          <DefaultButton
+            onClick={handleContinueSource}
+            disabled={selectedSource === null}
+            text='Continue'
+          />
+        </div>
+        {/* <div className="h-full w-full bg-gray-300 rounded-md">
             <h1 className="mb-6 text-4xl font-bold leading-none max-w-5xl mx-auto tracking-normal text-gray-900 sm:text-5xl md:text-4xl lg:text-5xl md:tracking-tight">Destination</h1>
             {
               destination ?
@@ -230,8 +230,8 @@ function Home() {
                   />
                 </div>
             }
-          </div>
-        </div>
+          </div> */}
+        {/* </div> */}
       </section>
       <Footer />
     </main>
