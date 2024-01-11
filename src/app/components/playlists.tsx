@@ -66,24 +66,25 @@ function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { prov
   }
 
   return (
-    <div>
-      <label>
-        <input type="checkbox" checked={selectedPlaylists.length === playlists.length} onChange={handleToggleAll} />
-        Select All
-      </label>
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0">
+        <label className="flex items-center">
+          <input className="text-black text-xl font-medium" type="checkbox" checked={selectedPlaylists.length === playlists.length} onChange={handleToggleAll} />
+          <div className="text-black text-xl font-medium">Select All</div>
+        </label>
+      </div>
 
-      <div className="flex flex-wrap">
-        {playlists.map((playlist) => (
-          <div
-            key={playlist.key}
-            className={`m-2 w-32 h-32 border-2 cursor-pointer flex items-center justify-center ${
-              selectedPlaylists.find((selected) => selected.key === playlist.key) ? 'bg-blue-300' : 'bg-white'
-            }`}
-            onClick={() => handleToggleOption(playlist)}
-          >
-            <label className="cursor-pointer">{provider.GetPlaylistName(playlist)}</label>
-          </div>
-        ))}
+      <div className="flex-grow">
+        <div className="flex flex-wrap">
+          {playlists.map((playlist) => (
+            <div onClick={() => handleToggleOption(playlist)} className={`w-40 h-40 flex flex-col`} >
+              <div className={`w-20 h-20 bg-white rounded-[10px] shadow `}>
+                <img src={`/icons/playlist_icon.svg`} alt="My Image" />
+              </div>
+              <label className="cursor-pointer">{provider.GetPlaylistName(playlist)}</label>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

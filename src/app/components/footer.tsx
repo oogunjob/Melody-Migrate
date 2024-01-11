@@ -3,7 +3,7 @@ import React from 'react'
 
 function Footer() {
     return (
-        <div className="w-full h-[120px] border-gray-200 border p-5 text-center text-slate-800 flex flex-col items-center justify-center">
+        <div className="w-full h-[120px] bg-white border-gray-200 border p-5 text-center text-slate-800 flex flex-col items-center justify-center">
             <div className='flex justify-evenly space-x-10 mt-4 text-lg text-gray-600'>
                 <div>
                     <a href="https://github.com/oogunjob/Universal-Music-Library-Transfer" target="_blank" className="flex items-center space-x-2">
