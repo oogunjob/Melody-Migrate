@@ -9,6 +9,9 @@ import Footer from './components/footer';
 import DefaultButton from './components/buttons/defaultButton';
 import DisplayBox from './components/displaybox';
 import MusicProviderSelection from './components/musicProviderSelection';
+import Transfer from './components/transfer';
+
+type OPTION = "NONE" | "TRANSFER" | "SYNC";
 
 // TODO: Once this is deployed, will need to make sure that the source cannot be accessed
 // from regular browser.
@@ -23,19 +26,21 @@ function Home() {
 
   const [providers, setProviders] = useState<BaseProvider[]>([]);
   const [isTransfered, setIsTransfered] = useState<Boolean>(false);
-  const [showOptions, setShowOptions] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [showOptions, setShowOptions] = useState<Boolean>(false);
+  const [selectedOption, setSelectedOption] = useState<OPTION>("NONE");
 
   // Fetch the Apple Music MusicKit instance on initial page load
   // TODO: Whenever the user refreshes the browser, the user music token is lost
   // and the user needs to reauthenticate. This is a bug that needs to be fixed.
   // Currently throws a 403 error when trying to fetch the user's library
   useEffect(() => {
+    // @ts-ignore
     window.MusicKit?.configure({
       developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN,
       icon: 'https://raw.githubusercontent.com/Musish/Musish/assets/misc/authIcon.png'
     });
 
+    // @ts-ignore
     const musicKit = new AppleMusicAPI(window.MusicKit?.getInstance());
     const spotifySDK = new SpotifySDK(SpotifySDK.CreateSDK());
     setProviders([spotifySDK, musicKit]);
@@ -104,14 +109,14 @@ function Home() {
 
       console.log(selectedSourcePlaylists);
 
-      setSelectedOption('transfer');
+      setSelectedOption("TRANSFER");
 
       switch (destination?.name) {
         case "Spotify":
-          await source?.TransferPlaylistsToSpotify(destination, selectedSourcePlaylists);
+          // await source?.TransferPlaylistsToSpotify(destination, selectedSourcePlaylists);
           break;
         case "Apple Music":
-          await source?.TransferPlaylistsToAppleMusic(destination, selectedSourcePlaylists);
+          // await source?.TransferPlaylistsToAppleMusic(destination, selectedSourcePlaylists);
           break;
         default:
           break;
@@ -132,7 +137,7 @@ function Home() {
           </div>
         </div>
       </section>
-      <section className="h-full w-full tails-selected-element flex items-center justify-center space-x-10">
+      <section className="bg-[#f8f8f8] h-full w-full pb-14 tails-selected-element flex items-center justify-center space-x-10">
         <div className="relative">
           <div className="text-center mb-4 [font-family:'Poppins-SemiBold',Helvetica] font-semibold text-black text-[40px]">Source</div>
           <DisplayBox>
@@ -154,13 +159,29 @@ function Home() {
         <div className="sm:relative bg-[#f8f8f8] sm:flex sm:flex-col">
           <div className="text-center mb-4 [font-family:'Poppins-SemiBold',Helvetica] font-semibold text-black text-[40px]">Destination</div>
           <DisplayBox>
-            <MusicProviderSelection
-              selectedProvider={selectedDestination}
-              // Remove the source provider from the list of providers
-              providers={providers.filter((provider) => provider.name !== source?.name)}
-              handleSelection={handleDestinationSelection}
-              handleContinue={handleContinueDestination}
-            />
+            {!showOptions ?
+              <MusicProviderSelection
+                selectedProvider={selectedDestination}
+                // Remove the source provider from the list of providers
+                providers={providers.filter((provider) => provider.name !== source?.name)}
+                handleSelection={handleDestinationSelection}
+                handleContinue={handleContinueDestination}
+              /> :
+              selectedOption == "NONE" ?
+                <div>
+                  <DefaultButton onClick={() => HandleTransfer('transfer')} disabled={false} text="Transfer" />
+                  <DefaultButton onClick={() => HandleTransfer('sync')} disabled={false} text="Sync" />
+                </div>
+                :
+                selectedOption == "TRANSFER" ?
+                  <Transfer
+                    source={source!}
+                    destination={destination!}
+                    playlists={selectedSourcePlaylists}
+                  />
+                  :
+                  <div>Synced</div>
+            }
           </DisplayBox>
         </div>
       </section>
