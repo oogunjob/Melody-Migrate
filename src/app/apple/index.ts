@@ -53,7 +53,11 @@ export class AppleMusicAPI implements BaseProvider {
 
     LogIn = async (): Promise<Boolean> => {
         let success = false;
+        // @ts-ignore
         await this.instance?.authorize().then((token: any) => { this.musicKitToken = token; success = true });
+
+        console.log("Logged in to Apple Music")
+        console.log(success)
 
         return success;
     };
@@ -62,6 +66,7 @@ export class AppleMusicAPI implements BaseProvider {
      * Logs user out of Apple Music
      */
     public async LogOut(): Promise<void> {
+        // @ts-ignore
         await this.instance?.unauthorize();
     }
 
@@ -95,7 +100,6 @@ export class AppleMusicAPI implements BaseProvider {
                     songs.push(...response.data);
 
                     // Update url to include new offset
-                    console.log(response.next)
                     api_url = response.next ? this.baseUrl + response.next + '&limit=100' : '';
 
                 } catch (error: any) {
@@ -279,11 +283,16 @@ export class AppleMusicAPI implements BaseProvider {
      * @param destination Spotify provider that the playlists will be transfered to
      * @param playlists playlists to transfer
      */
-    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
+    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[], updateState: (playlistName: string, state: string) => void): Promise<void> => {
+
         const appleMusicPlaylists: AppleMusicApi.Playlist[] = playlists as AppleMusicApi.Playlist[];
+
+        console.log(appleMusicPlaylists.length);
 
         for (const playlist of appleMusicPlaylists)
         {
+            updateState(playlist.attributes?.name ?? "", 'Transferring...');
+
             // Get all tracks in the playlist
             // Need to make sure that I get all of the tracks in the playlist, currently only gets the first 50 tracks
             const tracks = await this.GetSongsFromPlaylist(playlist.id);
@@ -308,6 +317,7 @@ export class AppleMusicAPI implements BaseProvider {
 
             const playlistId = await destination.CreatePlaylist(playlistName, spotifyTracksIds, description);
             console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
+            updateState(playlistName, 'Success');
         }
     }
 
