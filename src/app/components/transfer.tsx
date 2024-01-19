@@ -29,16 +29,22 @@ function Transfer({ source, destination, playlists }: { source: BaseProvider, de
 
     if (!isTransfered) {
         return (
-            <div>
-                {playlists?.map((playlist, index) => (
-                    <div key={index} className='flex'>
-                        <div className="w-[245px] h-20 bg-white rounded-[10px] shadow">
-                            {source.GetPlaylistName(playlist)}
-                        </div>
-                        <div className="w-[125px] h-20 bg-white rounded-[10px] shadow">
-                            {transferStates[source.GetPlaylistName(playlist)] || '----'}
-                        </div>
-                    </div>))}
+            <div className='flex flex-col h-full'>
+                <div className='mb-4'>Tosin</div>
+                <div className='flex flex-col overflow-auto'>
+                    {playlists?.map((playlist, index) => (
+                        <div key={index} className='flex justify-center'>
+                            <div className="w-[245px] h-20 flex items-center bg-white rounded-[10px] shadow mr-5 mb-5">
+                                <div className="mx-6">
+                                    <img src={`/icons/playlist_icon.svg`} alt={playlist.name} />
+                                </div>
+                                {source.GetPlaylistName(playlist)}
+                            </div>
+                            <div className="w-[125px] h-20 flex items-center justify-center bg-white rounded-[10px] shadow">
+                                {transferStates[source.GetPlaylistName(playlist)] || '----'}
+                            </div>
+                        </div>))}
+                </div>
             </div>
         )
     }

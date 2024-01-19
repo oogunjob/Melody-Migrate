@@ -139,16 +139,17 @@ function Home() {
       </section>
       <section className="bg-[#f8f8f8] h-full w-full pb-14 tails-selected-element flex items-center justify-center space-x-10">
         <div className="relative">
-          <div className="text-center mb-4 [font-family:'Poppins-SemiBold',Helvetica] font-semibold text-black text-[40px]">Source</div>
-          <DisplayBox>
+          <DisplayBox title={!source ? "Select Your Source" : "Select Playlists"}>
             {
               !source ?
+                // If no source is selected, show the source providers
                 <MusicProviderSelection
                   selectedProvider={selectedSource}
                   providers={providers}
                   handleSelection={handleSourceSelection}
                   handleContinue={handleContinueSource}
                 /> :
+                // If a source is selected, show the playlists from the source
                 <Playlists
                   provider={source}
                   selectedPlaylists={selectedSourcePlaylists}
@@ -157,8 +158,7 @@ function Home() {
           </DisplayBox>
         </div>
         <div className="sm:relative bg-[#f8f8f8] sm:flex sm:flex-col">
-          <div className="text-center mb-4 [font-family:'Poppins-SemiBold',Helvetica] font-semibold text-black text-[40px]">Destination</div>
-          <DisplayBox>
+          <DisplayBox title={!showOptions ? "Select Your Destination" : "Select an Option"}>
             {!showOptions ?
               <MusicProviderSelection
                 selectedProvider={selectedDestination}
