@@ -6,7 +6,7 @@ export interface BaseProvider {
     GetSongsFromPlaylist(playlistId: string): Promise<any[]>;
     GetPlaylistName: (playlist: any) => string;
     TransferPlaylistsToSpotify(destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void>;
-    TransferPlaylistsToAppleMusic(destination: BaseProvider, playlists: any[]): Promise<void>;
+    TransferPlaylistsToAppleMusic(destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void>;
     SearchForSong(songTitle: string, artist: string, albumTitle: string, explicit: boolean): Promise<string>;
     CreatePlaylist(name: string, tracks: string[], description?: string): Promise<string>;
 }

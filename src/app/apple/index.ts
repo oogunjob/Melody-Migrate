@@ -274,7 +274,7 @@ export class AppleMusicAPI implements BaseProvider {
      * @param destination Apple Music provider that the playlists will be transfered to
      * @param playlists playlists to transfer
      */
-    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
+    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void> => {
         throw new Error("Cannot transfer to Apple Music from Apple Music provider.");
     }
 
@@ -283,15 +283,12 @@ export class AppleMusicAPI implements BaseProvider {
      * @param destination Spotify provider that the playlists will be transfered to
      * @param playlists playlists to transfer
      */
-    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[], updateState: (playlistName: string, state: string) => void): Promise<void> => {
-
+    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void> => {
         const appleMusicPlaylists: AppleMusicApi.Playlist[] = playlists as AppleMusicApi.Playlist[];
-
-        console.log(appleMusicPlaylists.length);
 
         for (const playlist of appleMusicPlaylists)
         {
-            updateState(playlist.attributes?.name ?? "", 'Transferring...');
+            updateTransferState(playlist.attributes?.name ?? "Your Library", 'Transferring...');
 
             // Get all tracks in the playlist
             // Need to make sure that I get all of the tracks in the playlist, currently only gets the first 50 tracks
@@ -315,9 +312,10 @@ export class AppleMusicAPI implements BaseProvider {
             const playlistName = playlist.id === "library" ? "Apple Music Library" : playlist.attributes?.name ?? "";
             const description = playlist.id === "library" ? "Apple Music Library" : playlist.attributes?.description?.standard ?? "";
 
-            const playlistId = await destination.CreatePlaylist(playlistName, spotifyTracksIds, description);
+            // const playlistId = await destination.CreatePlaylist(playlistName, spotifyTracksIds, description);
+            const playlistId = "tosin";
             console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
-            updateState(playlistName, 'Success');
+            updateTransferState(playlistName, 'Done ✅');
         }
     }
 

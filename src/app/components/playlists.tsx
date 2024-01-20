@@ -1,6 +1,7 @@
 import React, { Dispatch, SetStateAction, useEffect } from 'react';
 import { BaseProvider } from '../types/sources';
 import '../loading_spinner.css';
+import LoadingSpinner from './loadingSpinner';
 
 interface Playlist {
   key: number;
@@ -9,6 +10,10 @@ interface Playlist {
   name: string;
   // ... other properties
 }
+
+// TODO: There's currently a bug where if the playlists have the same name, they will be considered the same playlist
+// This is because the playlists are stored in a set, which doesn't allow duplicates
+// Need to use Ids instead of names
 
 function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { provider: BaseProvider, selectedPlaylists: Playlist[], setSelectedPlaylists: Dispatch<SetStateAction<Playlist[]>> }) {
   const [isLoaded, setIsLoaded] = React.useState<boolean>(false);
@@ -52,17 +57,7 @@ function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { prov
 
   if (!isLoaded) {
     return (
-      <div className='flex justify-center items-center h-full'>
-        <div className='loader'>
-          <span className='stroke'></span>
-          <span className='stroke'></span>
-          <span className='stroke'></span>
-          <span className='stroke'></span>
-          <span className='stroke'></span>
-          <span className='stroke'></span>
-          <span className='stroke'></span>
-        </div>
-      </div>
+      <LoadingSpinner />
     );
   }
 
@@ -80,8 +75,8 @@ function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { prov
       <div className="flex justify-center overflow-auto h-full">
         <div className="grid grid-cols-4">
           {playlists.map((playlist, index) => (
-            <div className={`w-[120px] h-[120px] rounded-lg hover:bg-blue-200 flex items-center justify-center ${selectedPlaylists.includes(playlist) ? 'bg-blue-200' : ''}`}>
-              <div key={index} onClick={() => handleToggleOption(playlist)} className={`flex flex-col items-center justify-center cursor-pointer `} >
+            <div key={index} className={`w-[120px] h-[120px] rounded-lg hover:bg-blue-200 flex items-center justify-center ${selectedPlaylists.includes(playlist) ? 'bg-blue-200' : ''}`}>
+              <div onClick={() => handleToggleOption(playlist)} className={`flex flex-col items-center justify-center cursor-pointer `} >
                 <div className={`flex items-center justify-center w-20 h-20 bg-white rounded-[10px] shadow`}>
                   <img src={`/icons/playlist_icon.svg`} alt={playlist.name} />
                 </div>
@@ -94,7 +89,6 @@ function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { prov
         </div>
       </div>
     </div>
-
   );
 }
 

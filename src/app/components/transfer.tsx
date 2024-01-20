@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { BaseProvider } from '../types/sources';
 
 function Transfer({ source, destination, playlists }: { source: BaseProvider, destination: BaseProvider, playlists: any[] }) {
-    const [isLoaded, setIsLoaded] = useState<boolean>(false);
-    const [showOptions, setShowOptions] = useState<boolean>(false);
     const [isTransfered, setIsTransfered] = useState<boolean>(false);
     const [transferStates, setTransferStates] = useState<{ [key: string]: string }>({});
 
@@ -14,9 +12,11 @@ function Transfer({ source, destination, playlists }: { source: BaseProvider, de
                     await source.TransferPlaylistsToSpotify(destination, playlists, updateTransferState);
                     break;
                 case 'Apple Music':
-                    await source.TransferPlaylistsToSpotify(destination, playlists, updateTransferState);
+                    await source.TransferPlaylistsToAppleMusic(destination, playlists, updateTransferState);
                     break;
             }
+
+            setIsTransfered(true);
         };
 
         transferPlaylists();
@@ -27,30 +27,25 @@ function Transfer({ source, destination, playlists }: { source: BaseProvider, de
         setTransferStates(prevState => ({ ...prevState, [playlistName]: state }));
     }
 
-    if (!isTransfered) {
-        return (
-            <div className='flex flex-col h-full'>
-                <div className='mb-4'>Tosin</div>
-                <div className='flex flex-col overflow-auto'>
-                    {playlists?.map((playlist, index) => (
-                        <div key={index} className='flex justify-center'>
-                            <div className="w-[245px] h-20 flex items-center bg-white rounded-[10px] shadow mr-5 mb-5">
-                                <div className="mx-6">
-                                    <img src={`/icons/playlist_icon.svg`} alt={playlist.name} />
-                                </div>
-                                {source.GetPlaylistName(playlist)}
-                            </div>
-                            <div className="w-[125px] h-20 flex items-center justify-center bg-white rounded-[10px] shadow">
-                                {transferStates[source.GetPlaylistName(playlist)] || '----'}
-                            </div>
-                        </div>))}
-                </div>
-            </div>
-        )
-    }
-
     return (
-        <div>Transfered</div>
+        <div className='flex flex-col items-center h-full p-8'>
+            <div className='mb-4 text-black text-xl font-medium'>{!isTransfered ? `Transferring to ${destination.name}` : "Transfer Complete"}</div>
+            <div className='mb-4 text-gray text-xl font-normal'>Do not refresh or close until completion</div> {/* Should have an option after completition, try again. */}
+            <div className='flex flex-col overflow-auto'>
+                {playlists?.map((playlist, index) => (
+                    <div key={index} className='flex justify-center mx-3'>
+                        <div className="w-[315px] h-20 flex items-center font-normal bg-white rounded-[10px] shadow mr-5 mb-5 overflow-hidden overflow-ellipsis whitespace-nowrap">
+                            <div className="mx-2 ">
+                                <img src={`/icons/playlist_icon.svg`} alt={playlist.name} />
+                            </div>
+                            {source.GetPlaylistName(playlist)}
+                        </div>
+                        <div className="w-[140px] h-20 flex items-center font-semibold justify-center bg-white rounded-[10px] shadow">
+                            {transferStates[source.GetPlaylistName(playlist)] || '----'}
+                        </div>
+                    </div>))}
+            </div>
+        </div>
     )
 }
 
