@@ -1,5 +1,5 @@
 import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track, PlaylistedTrack, MaxInt, User, SavedTrack } from "@spotify/web-api-ts-sdk";
-import { BaseProvider, UserLibrary } from "../types/sources";
+import { BaseProvider, TRANSFER_STATE, UserLibrary } from "../types/sources";
 
 // TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
@@ -181,12 +181,11 @@ export default class SpotifySDK implements BaseProvider {
      * @param destination Apple Music provider that the playlists will be transfered to
      * @param playlists playlists from Spotify to transfer
      */
-    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void> => {
+    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void): Promise<void> => {
         const spotifyPlaylists: Playlist[] = playlists as Playlist[];
 
-        for (const playlist of spotifyPlaylists)
-        {
-            updateTransferState(playlist.name, 'Transferring...');
+        const playlistPromises = spotifyPlaylists.map(async (playlist) => {
+            updateTransferState(playlist.name, "TRANSFERRING");
 
             // Get all tracks in the playlist
             const tracks: Track[] = await this.GetSongsFromPlaylist(playlist.id);
@@ -194,26 +193,34 @@ export default class SpotifySDK implements BaseProvider {
             // Search for each track in the playlist on Apple Music
             const appleMusicTracksIds: string[] = [];
 
-            for (const track of tracks)
-            {
+            for (const track of tracks) {
                 const songId = await destination.SearchForSong(track.name, track.artists[0].name, track.album.name, track.explicit);
 
                 // Push the song id to the array if it was found on Apple Music
-                if (songId)
-                {
+                if (songId) {
                     appleMusicTracksIds.push(songId);
                 }
-                else{
-                    console.log("Song not found: " + track.name + " by " + track.artists[0].name);
-                }
+
+                // If it wasn't found I could add it to an array and display it to the user
             }
 
             // Create the playlist on Apple Music
+            // try {
+            //     const playlistId = await destination.CreatePlaylist(playlist.name, appleMusicTracksIds, playlist.description);
+            //     console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
+            // }
+            // catch (e) {
+            //     console.log(e);
+            //     updateTransferState(playlist.name, "FAILED");
+            // }
             // const playlistId = await destination.CreatePlaylist(playlist.name, appleMusicTracksIds, playlist.description);
             const playlistId = "tosin";
             console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
 
-            updateTransferState(playlist.name, 'Done ✅');
-        }
+            updateTransferState(playlist.name, "COMPLETE");
+        });
+
+        // Wait for all playlists to be created
+        await Promise.all(playlistPromises);
     }
 }
