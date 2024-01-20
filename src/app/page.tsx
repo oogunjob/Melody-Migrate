@@ -4,7 +4,6 @@ import { AppleMusicAPI } from './apple';
 import SpotifySDK from './spotify';
 import Playlists from './components/playlists';
 import { BaseProvider } from './types/sources';
-import Provider from './components/buttons/providerCard';
 import Footer from './components/footer';
 import DefaultButton from './components/buttons/defaultButton';
 import DisplayBox from './components/displaybox';
@@ -21,11 +20,8 @@ function Home() {
   const [selectedSource, setSelectedSource] = useState<BaseProvider | null>(null);
   const [selectedDestination, setSelectedDestination] = useState<BaseProvider | null>(null);
   const [selectedSourcePlaylists, setSelectedSourcePlaylists] = useState<any[]>([]);
-
   const [selectedDestinationPlaylists, setSelectedDestinationPlaylists] = useState<any[]>([]);
-
   const [providers, setProviders] = useState<BaseProvider[]>([]);
-  const [isTransfered, setIsTransfered] = useState<Boolean>(false);
   const [showOptions, setShowOptions] = useState<Boolean>(false);
   const [selectedOption, setSelectedOption] = useState<OPTION>("NONE");
 
@@ -43,6 +39,7 @@ function Home() {
     // @ts-ignore
     const musicKit = new AppleMusicAPI(window.MusicKit?.getInstance());
     const spotifySDK = new SpotifySDK(SpotifySDK.CreateSDK());
+
     setProviders([spotifySDK, musicKit]);
   }, []);
 
@@ -122,9 +119,6 @@ function Home() {
           break;
       }
     }
-
-    // TODO: TransferPlaylistsToSpotify and TransferPlaylistsToAppleMusic should return a boolean
-    setIsTransfered(true);
   }
 
   return (
@@ -139,16 +133,17 @@ function Home() {
       </section>
       <section className="bg-[#f8f8f8] h-full w-full pb-14 tails-selected-element flex items-center justify-center space-x-10">
         <div className="relative">
-          <div className="text-center mb-4 [font-family:'Poppins-SemiBold',Helvetica] font-semibold text-black text-[40px]">Source</div>
-          <DisplayBox>
+          <DisplayBox title={!source ? "Select Your Source" : "Select Playlists"}>
             {
               !source ?
+                // If no source is selected, show the source providers
                 <MusicProviderSelection
                   selectedProvider={selectedSource}
                   providers={providers}
                   handleSelection={handleSourceSelection}
                   handleContinue={handleContinueSource}
                 /> :
+                // If a source is selected, show the playlists from the source
                 <Playlists
                   provider={source}
                   selectedPlaylists={selectedSourcePlaylists}
@@ -157,8 +152,7 @@ function Home() {
           </DisplayBox>
         </div>
         <div className="sm:relative bg-[#f8f8f8] sm:flex sm:flex-col">
-          <div className="text-center mb-4 [font-family:'Poppins-SemiBold',Helvetica] font-semibold text-black text-[40px]">Destination</div>
-          <DisplayBox>
+          <DisplayBox title={!showOptions ? "Select Your Destination" : selectedOption == "NONE" ? "Select An Option" : selectedOption == "TRANSFER" ? "Transfer" : ""}>
             {!showOptions ?
               <MusicProviderSelection
                 selectedProvider={selectedDestination}
@@ -168,9 +162,9 @@ function Home() {
                 handleContinue={handleContinueDestination}
               /> :
               selectedOption == "NONE" ?
-                <div>
-                  <DefaultButton onClick={() => HandleTransfer('transfer')} disabled={false} text="Transfer" />
-                  <DefaultButton onClick={() => HandleTransfer('sync')} disabled={false} text="Sync" />
+                <div className='h-full space-y-10 flex flex-col justify-center items-center'>
+                  <DefaultButton onClick={() => HandleTransfer('transfer')} disabled={false} text="Transfer From Source to Destination" />
+                  <DefaultButton onClick={() => HandleTransfer('sync')} disabled={false} text="Sync With Source" />
                 </div>
                 :
                 selectedOption == "TRANSFER" ?

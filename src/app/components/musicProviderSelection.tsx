@@ -5,9 +5,8 @@ import { BaseProvider } from '../types/sources';
 
 function MusicProviderSelection({ selectedProvider, providers, handleSelection, handleContinue }: { selectedProvider: any, providers: BaseProvider[], handleSelection: any, handleContinue: () => void }) {
     return (
-        <>
-            <div className="flex-1 border-b-2 border-blue-500 text-center [font-family:'Poppins-Medium',Helvetica] font-medium text-black text-[20px]">Select Source</div>
-            <div className="flex-1 border-b-2 border-blue-500 flex-wrap flex justify-evenly">
+        <div className="flex flex-col justify-between h-full p-8">
+            <div className="flex justify-evenly">
                 {
                     providers?.map((source, index) => (
                         <div key={index}>
@@ -21,14 +20,14 @@ function MusicProviderSelection({ selectedProvider, providers, handleSelection, 
                     ))
                 }
             </div>
-            <div className="flex-1 flex justify-center items-center">
+            <div className="flex justify-center mt-4">
                 <DefaultButton
                     onClick={handleContinue}
                     disabled={selectedProvider === null}
                     text='Continue'
                 />
             </div>
-        </>
+        </div>
     )
 }
 

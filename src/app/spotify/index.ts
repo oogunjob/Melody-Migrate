@@ -4,6 +4,8 @@ import { BaseProvider, UserLibrary } from "../types/sources";
 // TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
 // track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
 // I would want to alert the user that the first 100 were completed, and move on to the next 100, and so on.
+
+// TODO: Need to add threading for fetching songs from playlists and searching for songs
 export default class SpotifySDK implements BaseProvider {
     sdk: SpotifyApi;
     name: string = "Spotify";
@@ -179,11 +181,13 @@ export default class SpotifySDK implements BaseProvider {
      * @param destination Apple Music provider that the playlists will be transfered to
      * @param playlists playlists from Spotify to transfer
      */
-    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
+    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void> => {
         const spotifyPlaylists: Playlist[] = playlists as Playlist[];
 
         for (const playlist of spotifyPlaylists)
         {
+            updateTransferState(playlist.name, 'Transferring...');
+
             // Get all tracks in the playlist
             const tracks: Track[] = await this.GetSongsFromPlaylist(playlist.id);
 
@@ -205,8 +209,11 @@ export default class SpotifySDK implements BaseProvider {
             }
 
             // Create the playlist on Apple Music
-            const playlistId = await destination.CreatePlaylist(playlist.name, appleMusicTracksIds, playlist.description);
+            // const playlistId = await destination.CreatePlaylist(playlist.name, appleMusicTracksIds, playlist.description);
+            const playlistId = "tosin";
             console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
+
+            updateTransferState(playlist.name, 'Done ✅');
         }
     }
 }

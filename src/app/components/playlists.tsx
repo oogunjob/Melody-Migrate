@@ -1,6 +1,7 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import React, { Dispatch, SetStateAction, useEffect } from 'react';
 import { BaseProvider } from '../types/sources';
-
+import '../loading_spinner.css';
+import LoadingSpinner from './loadingSpinner';
 
 interface Playlist {
   key: number;
@@ -9,6 +10,10 @@ interface Playlist {
   name: string;
   // ... other properties
 }
+
+// TODO: There's currently a bug where if the playlists have the same name, they will be considered the same playlist
+// This is because the playlists are stored in a set, which doesn't allow duplicates
+// Need to use Ids instead of names
 
 function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { provider: BaseProvider, selectedPlaylists: Playlist[], setSelectedPlaylists: Dispatch<SetStateAction<Playlist[]>> }) {
   const [isLoaded, setIsLoaded] = React.useState<boolean>(false);
@@ -52,53 +57,38 @@ function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { prov
 
   if (!isLoaded) {
     return (
-      <div
-        className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-        role="status"
-      >
-        <span
-          className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
-        >
-          Loading...
-        </span>
-      </div>
+      <LoadingSpinner />
     );
   }
 
   return (
-    <div className="flex flex-col h-full justify-between">
+    <div className="flex flex-col h-full p-8">
       {/* Select All section */}
       <div className="flex">
-        <label className="flex items-center">
-          <input className="text-black text-xl font-medium" type="checkbox" checked={selectedPlaylists.length === playlists.length} onChange={handleToggleAll} />
+        <label className="flex items-center mb-5">
+          <input className="w-5 h-5 mr-3 cursor-pointer" type="checkbox" checked={selectedPlaylists.length === playlists.length} onChange={handleToggleAll} />
           <div className="text-black text-xl font-medium">Select All</div>
         </label>
       </div>
 
-      <div className="flex justify-center">
-        <div className="flex flex-wrap justify-center">
+      {/* Playlists */}
+      <div className="flex justify-center overflow-auto h-full">
+        <div className="grid grid-cols-4">
           {playlists.map((playlist, index) => (
-            <div key={index} onClick={() => handleToggleOption(playlist)} className={`w-40 h-40 flex flex-col items-center cursor-pointer ${selectedPlaylists.includes(playlist) ? 'border-4 border-indigo-500' : ''}`} >
-              <div className={`w-20 h-20 bg-white rounded-[10px] shadow`}>
-                <img src={`/icons/playlist_icon.svg`} alt={playlist.name} />
+            <div key={index} className={`w-[120px] h-[120px] rounded-lg hover:bg-blue-200 flex items-center justify-center ${selectedPlaylists.includes(playlist) ? 'bg-blue-200' : ''}`}>
+              <div onClick={() => handleToggleOption(playlist)} className={`flex flex-col items-center justify-center cursor-pointer `} >
+                <div className={`flex items-center justify-center w-20 h-20 bg-white rounded-[10px] shadow`}>
+                  <img src={`/icons/playlist_icon.svg`} alt={playlist.name} />
+                </div>
+                <div className='flex items-center justify-center'>
+                  <label className="max-w-[100px] cursor-pointer overflow-hidden overflow-ellipsis whitespace-nowrap" title={provider.GetPlaylistName(playlist)}>{provider.GetPlaylistName(playlist)}</label>
+                </div>
               </div>
-              <label className="cursor-pointer">{provider.GetPlaylistName(playlist)}</label>
             </div>
           ))}
         </div>
       </div>
-
-
-
-
-
-
-      {/* Continue section */}
-      <div className="flex">
-        <div className="text-black text-xl font-medium cursor-pointer">Continue</div>
-      </div>
     </div>
-
   );
 }
 
