@@ -1,11 +1,6 @@
 import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track, PlaylistedTrack, MaxInt, User, SavedTrack } from "@spotify/web-api-ts-sdk";
 import { BaseProvider, TRANSFER_STATE, UserLibrary } from "../types/sources";
 
-// TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
-// track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
-// I would want to alert the user that the first 100 were completed, and move on to the next 100, and so on.
-
-// TODO: Need to add threading for fetching songs from playlists and searching for songs
 export default class SpotifySDK implements BaseProvider {
     sdk: SpotifyApi;
     name: string = "Spotify";
@@ -23,7 +18,7 @@ export default class SpotifySDK implements BaseProvider {
         const sdk = SpotifyApi.withUserAuthorization(
             process.env.NEXT_PUBLIC_CLIENT_ID ?? "",
             process.env.NEXT_PUBLIC_REDIRECT_URI ?? "",
-            Scopes.all); // TODO: Update this to only request the scopes that are needed
+            [...Scopes.playlist, ...Scopes.userLibraryRead]);
 
         return sdk;
     }
@@ -134,15 +129,14 @@ export default class SpotifySDK implements BaseProvider {
         return playlist.id;
     }
 
-    // TODO: Need to figure out how to add logic to log in to Spotify from here
-    // and make this a pop up window instead of a new page
     /**
      * Logs user in to Spotify
      * @returns true if the user is logged in, false otherwise
      */
     LogIn = async (): Promise<boolean> => {
-        console.log("Logging in to Spotify");
-        return true;
+        // TODO: Need to figure out how to make this a pop up window instead of a new page
+        const response = await this.sdk.authenticate();
+        return response.authenticated;
     };
 
     /**
