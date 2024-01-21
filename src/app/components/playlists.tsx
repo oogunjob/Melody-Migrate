@@ -1,7 +1,6 @@
 import React, { Dispatch, SetStateAction, useEffect } from 'react';
 import { BaseProvider } from '../types/sources';
-import '../loading_spinner.css';
-import LoadingSpinner from './loadingSpinner';
+import LoadingSpinner from './animations/loadingSpinner';
 
 interface Playlist {
   key: number;

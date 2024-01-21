@@ -1,0 +1,11 @@
+@keyframes typing {
+    0% { content: '.'; }
+    33% { content: '..'; }
+    66% { content: '...'; }
+    100% { content: ''; }
+}
+
+.typing::after {
+    content: ' ';
+    animation: typing 1s steps(5, end) infinite;
+}

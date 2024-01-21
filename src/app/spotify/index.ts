@@ -1,11 +1,6 @@
 import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track, PlaylistedTrack, MaxInt, User, SavedTrack } from "@spotify/web-api-ts-sdk";
-import { BaseProvider, UserLibrary } from "../types/sources";
+import { BaseProvider, TRANSFER_STATE, UserLibrary } from "../types/sources";
 
-// TODO: One of the things that I'll have to explore in the future with making a class like this is if I'll be able to
-// track the status of uploads. For example, if a playlist has 500 tracks, but only 100 uploads are allowed at a time,
-// I would want to alert the user that the first 100 were completed, and move on to the next 100, and so on.
-
-// TODO: Need to add threading for fetching songs from playlists and searching for songs
 export default class SpotifySDK implements BaseProvider {
     sdk: SpotifyApi;
     name: string = "Spotify";
@@ -23,7 +18,7 @@ export default class SpotifySDK implements BaseProvider {
         const sdk = SpotifyApi.withUserAuthorization(
             process.env.NEXT_PUBLIC_CLIENT_ID ?? "",
             process.env.NEXT_PUBLIC_REDIRECT_URI ?? "",
-            Scopes.all); // TODO: Update this to only request the scopes that are needed
+            [...Scopes.playlist, ...Scopes.userLibraryRead]);
 
         return sdk;
     }
@@ -134,15 +129,14 @@ export default class SpotifySDK implements BaseProvider {
         return playlist.id;
     }
 
-    // TODO: Need to figure out how to add logic to log in to Spotify from here
-    // and make this a pop up window instead of a new page
     /**
      * Logs user in to Spotify
      * @returns true if the user is logged in, false otherwise
      */
     LogIn = async (): Promise<boolean> => {
-        console.log("Logging in to Spotify");
-        return true;
+        // TODO: Need to figure out how to make this a pop up window instead of a new page
+        const response = await this.sdk.authenticate();
+        return response.authenticated;
     };
 
     /**
@@ -181,12 +175,11 @@ export default class SpotifySDK implements BaseProvider {
      * @param destination Apple Music provider that the playlists will be transfered to
      * @param playlists playlists from Spotify to transfer
      */
-    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void> => {
+    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void): Promise<void> => {
         const spotifyPlaylists: Playlist[] = playlists as Playlist[];
 
-        for (const playlist of spotifyPlaylists)
-        {
-            updateTransferState(playlist.name, 'Transferring...');
+        const playlistPromises = spotifyPlaylists.map(async (playlist) => {
+            updateTransferState(playlist.name, "TRANSFERRING");
 
             // Get all tracks in the playlist
             const tracks: Track[] = await this.GetSongsFromPlaylist(playlist.id);
@@ -194,26 +187,34 @@ export default class SpotifySDK implements BaseProvider {
             // Search for each track in the playlist on Apple Music
             const appleMusicTracksIds: string[] = [];
 
-            for (const track of tracks)
-            {
+            for (const track of tracks) {
                 const songId = await destination.SearchForSong(track.name, track.artists[0].name, track.album.name, track.explicit);
 
                 // Push the song id to the array if it was found on Apple Music
-                if (songId)
-                {
+                if (songId) {
                     appleMusicTracksIds.push(songId);
                 }
-                else{
-                    console.log("Song not found: " + track.name + " by " + track.artists[0].name);
-                }
+
+                // If it wasn't found I could add it to an array and display it to the user
             }
 
             // Create the playlist on Apple Music
+            // try {
+            //     const playlistId = await destination.CreatePlaylist(playlist.name, appleMusicTracksIds, playlist.description);
+            //     console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
+            // }
+            // catch (e) {
+            //     console.log(e);
+            //     updateTransferState(playlist.name, "FAILED");
+            // }
             // const playlistId = await destination.CreatePlaylist(playlist.name, appleMusicTracksIds, playlist.description);
             const playlistId = "tosin";
             console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
 
-            updateTransferState(playlist.name, 'Done ✅');
-        }
+            updateTransferState(playlist.name, "COMPLETE");
+        });
+
+        // Wait for all playlists to be created
+        await Promise.all(playlistPromises);
     }
 }

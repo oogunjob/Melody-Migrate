@@ -1,5 +1,11 @@
 import { AppleMusicApi } from "../types/apple-music-api";
-import { BaseProvider, UserLibrary } from "../types/sources";
+import { BaseProvider, TRANSFER_STATE, UserLibrary } from "../types/sources";
+import Bottleneck from "bottleneck";
+
+const limiter = new Bottleneck({
+    maxConcurrent: 3, // Limit concurrency to 1 request at a time
+    minTime: 1000 / 7, // Allow 5 requests per second
+});
 
 interface SongCriteria {
     artistName: string;
@@ -12,6 +18,7 @@ export class AppleMusicAPI implements BaseProvider {
     name = "Apple Music";
     icon = "apple_music_icon.png";
     baseUrl: string = 'https://api.music.apple.com';
+    maxRetries: number = 3;
 
     private instance: MusicKit.MusicKitInstance | null;
     private musicKitToken: string | null = null;
@@ -197,32 +204,46 @@ export class AppleMusicAPI implements BaseProvider {
      * @param explicit whether or not the song is explicit
      * @returns the id of the song if found, empty string otherwise
      */
-    SearchForSong = async (songTitle: string, artist: string, albumTitle: string, explicit: boolean = true): Promise<string> => {
+    SearchForSong = limiter.wrap(async (songTitle: string, artist: string, albumTitle: string, explicit: boolean = true): Promise<string> => {
         const encodedQuery = encodeURIComponent(`${songTitle} ${artist} ${albumTitle}`);
         let api_url = this.baseUrl + `/v1/catalog/us/search?types=songs&term=${encodedQuery}&limit=3`;
 
         let songId: string = "";
 
-        try {
-            // Fetch the first 25 playlists in the user's library
-            const response: AppleMusicApi.AppleMusicSearchResult = await fetch(api_url, {
-                headers: this.GetHeader(),
-            }).then(response => response.json()).then(data => { return data });
+        let retryCount: number = 0;
 
-            // Find the best match for the song if it exists
-            if (response.results.songs && response.results.songs.data !== undefined) {
-                songId = this.FindBestMatch(response.results.songs.data, { artistName: artist, songTitle: songTitle, albumTitle: albumTitle, contentRating: explicit ? "explicit" : "clean" })
-            }
-            else{
-                console.log("Could not find song: " + songTitle + " by " + artist + " on Apple Music.");
-            }
+        do {
+            try {
+                // Fetch the first 25 playlists in the user's library
+                const response: AppleMusicApi.AppleMusicSearchResult = await fetch(api_url, {
+                    headers: this.GetHeader(),
+                }).then(response => response.json()).then(data => { return data });
 
-        } catch (error: any) {
-            console.error(`Error: ${error.message}`);
-        }
+                // Find the best match for the song if it exists
+                if (response.results.songs && response.results.songs.data !== undefined) {
+                    songId = this.FindBestMatch(response.results.songs.data, { artistName: artist, songTitle: songTitle, albumTitle: albumTitle, contentRating: explicit ? "explicit" : "clean" })
+                    break;
+                }
+                else {
+                    console.log("Could not find song: " + songTitle + " by " + artist + " on Apple Music.");
+                    break;
+                }
+            } catch (error: any) {
+                console.error(`Error: ${error.message}`);
+
+                if (error.statusCode === 429 && retryCount < this.maxRetries) {
+                    const waitTime = Math.pow(2, retryCount) * 1000; // Exponential backoff
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    retryCount++;
+                } else {
+                    // Handle other errors or break out of the loop
+                    break;
+                }
+            }
+        } while (retryCount < this.maxRetries);
 
         return songId;
-    }
+    });
 
     /**
      * Gets all the playlists from the user's Apple Music account
@@ -274,7 +295,7 @@ export class AppleMusicAPI implements BaseProvider {
      * @param destination Apple Music provider that the playlists will be transfered to
      * @param playlists playlists to transfer
      */
-    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void> => {
+    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void): Promise<void> => {
         throw new Error("Cannot transfer to Apple Music from Apple Music provider.");
     }
 
@@ -283,27 +304,24 @@ export class AppleMusicAPI implements BaseProvider {
      * @param destination Spotify provider that the playlists will be transfered to
      * @param playlists playlists to transfer
      */
-    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: string) => void): Promise<void> => {
+    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void): Promise<void> => {
         const appleMusicPlaylists: AppleMusicApi.Playlist[] = playlists as AppleMusicApi.Playlist[];
 
-        for (const playlist of appleMusicPlaylists)
-        {
-            updateTransferState(playlist.attributes?.name ?? "Your Library", 'Transferring...');
+        const playlistPromises = appleMusicPlaylists.map(async (playlist) => {
+            // TODO: Come back to this line, instead of using the playlist name, use the playlist id
+            updateTransferState(playlist.attributes?.name ?? "Your Library", "TRANSFERRING");
 
             // Get all tracks in the playlist
-            // Need to make sure that I get all of the tracks in the playlist, currently only gets the first 50 tracks
             const tracks = await this.GetSongsFromPlaylist(playlist.id);
 
             // Search for each track in the playlist on Spotify
             const spotifyTracksIds: string[] = [];
-            for (const track of tracks)
-            {
+            for (const track of tracks) {
                 const isExplicit = track.attributes?.contentRating === "explicit";
                 const songId = await destination.SearchForSong(track.attributes?.name ?? "", track.attributes?.artistName ?? "", track.attributes?.albumName ?? "", isExplicit);
 
                 // Push the song id to the array if it was found on Spotify
-                if (songId)
-                {
+                if (songId) {
                     spotifyTracksIds.push(songId);
                 }
             }
@@ -315,8 +333,11 @@ export class AppleMusicAPI implements BaseProvider {
             // const playlistId = await destination.CreatePlaylist(playlistName, spotifyTracksIds, description);
             const playlistId = "tosin";
             console.log("Playlist successfully created: " + playlistId); // TODO: Remove this
-            updateTransferState(playlistName, 'Done ✅');
-        }
+            updateTransferState(playlistName, "COMPLETE");
+        });
+
+        // Wait for all playlists to be created
+        await Promise.all(playlistPromises);
     }
 
     /**
