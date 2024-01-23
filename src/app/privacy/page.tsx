@@ -1,13 +1,14 @@
-import React from 'react'
-import SEO from '../components/seo'
+import React from 'react';
+import SEO from '../components/seo';
+import Footer from '../components/footer';
 
 function Privacy() {
   return (
-    <div className='min-h-full bg-white py-[20px]'>
+    <div className='flex flex-col bg-[#f8f8f8] min-h-screen'>
       <SEO title="Privacy" description="Testing" />
 
-      <section id="privacy" className='pb-[48px]'>
-        <h1 className='flex justify-center font-semibold text-2xl md:text-4xl pb-7'>Privacy Policy</h1>
+      <section id="privacy" className='flex-1'>
+        <h1 className='flex justify-center font-semibold text-2xl md:text-4xl pb-7 py-10'>Privacy Policy</h1>
         <div className='max-w-sm md:max-w-2xl mx-5 md:mx-auto'>
           <p className='pb-5'>This service is free of use for all users who want to transfer their music. For all visitors, Universal Music Library Transfer does not collect, use, or disclose any personal information to any third-party from those who use the service. All code that is run is hosted and maintatined on
             GitHub for transparency and improvments. Universal Music Library Transfer uses Google Analytics to analyze web traffic and improve upon current features. If you choose to use , then you agree to the terms of this policy.
@@ -19,11 +20,11 @@ function Privacy() {
                 Start From Scratch login option.`}
           </p>
 
-          <p>For any additional comments, questions, concerns, or feedback, please feel free to share via any of the provided contact links in the <b> CONTACT</b> section of the footer.</p>
         </div>
       </section>
+      <Footer />
     </div>
-  )
+  );
 }
 
-export default Privacy
+export default Privacy;

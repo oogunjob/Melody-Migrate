@@ -62,7 +62,6 @@ function Transfer({ source, destination, playlists }: { source: BaseProvider, de
                             {source.GetPlaylistName(playlist)}
                         </div>
                         <div className="w-[140px] h-20 flex items-center font-semibold justify-center bg-white rounded-[10px] shadow">
-                            {/* {transferStates[source.GetPlaylistName(playlist)] || '----'} */}
                             {ReturnTransferState(playlist)}
                         </div>
                     </div>))}

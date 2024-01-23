@@ -1,5 +1,7 @@
 import React from 'react'
 
+// TODO: Eventually When you hover over options for transfer or sync a tooltip should appear explaining what each option does
+
 function Sync() {
 
     // const HandleSync = async (option: string) => {

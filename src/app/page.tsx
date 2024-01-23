@@ -24,6 +24,9 @@ function Home() {
   const [providers, setProviders] = useState<BaseProvider[]>([]);
   const [showOptions, setShowOptions] = useState<Boolean>(false);
   const [selectedOption, setSelectedOption] = useState<OPTION>("NONE");
+  const [displaySync, setDisplaySync] = useState<Boolean>(false);
+  const [playlistsToTransferToDestination, setPlaylistsToTransferToDestination] = useState<any[]>([]);
+  const [playlistsToTransferToSource, setPlaylistsToTransferToSource] = useState<any[]>([]);
 
   // Fetch the Apple Music MusicKit instance on initial page load
   // TODO: Whenever the user refreshes the browser, the user music token is lost
@@ -85,40 +88,20 @@ function Home() {
   /**
    * Handles the transfer of the playlists from the source to the destination
    */
-  const HandleTransfer = async (option: string) => {
-    if (option === 'sync') {
-      const source1 = new Set(selectedSourcePlaylists.map((playlist) => source?.GetPlaylistName(playlist) ?? ""));
-      const destination1 = new Set(selectedDestinationPlaylists.map((playlist) => destination?.GetPlaylistName(playlist) ?? ""));
+  const HandleDisplaySync = () => {
+    const source1 = new Set(selectedSourcePlaylists.map((playlist) => source?.GetPlaylistName(playlist) ?? ""));
+    const destination1 = new Set(selectedDestinationPlaylists.map((playlist) => destination?.GetPlaylistName(playlist) ?? ""));
 
-      const missingInSource: string[] = [...new Set([...destination1].filter(x => !source1.has(x)))];
-      const missingInDestination: string[] = [...new Set([...source1].filter(x => !destination1.has(x)))];
+    const missingInSource: string[] = [...new Set([...destination1].filter(x => !source1.has(x)))];
+    const missingInDestination: string[] = [...new Set([...source1].filter(x => !destination1.has(x)))];
 
-      console.log("The following are missing in the source: ", missingInSource);
-      console.log("The following are missing in the destination: ", missingInDestination);
-    }
+    const playlistsToTransferToDestination_ = selectedSourcePlaylists.filter((playlist) => missingInDestination.includes(source?.GetPlaylistName(playlist) ?? ""));
+    const playlistsToTransferToSource_ = selectedDestinationPlaylists.filter((playlist) => missingInSource.includes(destination?.GetPlaylistName(playlist) ?? ""));
 
-    if (option === 'transfer') {
+    setPlaylistsToTransferToDestination(playlistsToTransferToDestination_);
+    setPlaylistsToTransferToSource(playlistsToTransferToSource_);
 
-      if (selectedSourcePlaylists.length === 0) {
-        alert('Please select at least one playlist to transfer');
-        return;
-      }
-
-      console.log(selectedSourcePlaylists);
-
-      setSelectedOption("TRANSFER");
-
-      switch (destination?.name) {
-        case "Spotify":
-          // await source?.TransferPlaylistsToSpotify(destination, selectedSourcePlaylists);
-          break;
-        case "Apple Music":
-          // await source?.TransferPlaylistsToAppleMusic(destination, selectedSourcePlaylists);
-          break;
-        default:
-          break;
-      }
-    }
+    setDisplaySync(true);
   }
 
   return (
@@ -133,7 +116,7 @@ function Home() {
       </section>
       <section className="bg-[#f8f8f8] h-full w-full pb-14 tails-selected-element flex items-center justify-center space-x-10">
         <div className="relative">
-          <DisplayBox title={!source ? "Select Your Source" : "Select Playlists"}>
+          <DisplayBox title={!source ? "Select Your Source" : `Select Playlists To ${selectedOption === 'NONE' ? 'Transfer/Sync' : selectedOption === "TRANSFER" ? 'Transfer' : 'Sync'}`}>
             {
               !source ?
                 // If no source is selected, show the source providers
@@ -143,16 +126,22 @@ function Home() {
                   handleSelection={handleSourceSelection}
                   handleContinue={handleContinueSource}
                 /> :
-                // If a source is selected, show the playlists from the source
-                <Playlists
-                  provider={source}
-                  selectedPlaylists={selectedSourcePlaylists}
-                  setSelectedPlaylists={setSelectedSourcePlaylists} />
+                !displaySync ?
+                  // If a source is selected, show the playlists from the source
+                  <Playlists
+                    provider={source}
+                    selectedPlaylists={selectedSourcePlaylists}
+                    setSelectedPlaylists={setSelectedSourcePlaylists} /> :
+                  // If the sync is displayed, show the sync component
+                  <Transfer
+                    source={source!}
+                    destination={destination!}
+                    playlists={playlistsToTransferToDestination} />
             }
           </DisplayBox>
         </div>
         <div className="sm:relative bg-[#f8f8f8] sm:flex sm:flex-col">
-          <DisplayBox title={!showOptions ? "Select Your Destination" : selectedOption == "NONE" ? "Select An Option" : selectedOption == "TRANSFER" ? "Transfer" : ""}>
+          <DisplayBox title={!showOptions ? "Select Your Destination" : selectedOption == "NONE" ? "Select An Option" : selectedOption == "TRANSFER" ? "Transfer" : "Select Playlists To Sync"}>
             {!showOptions ?
               <MusicProviderSelection
                 selectedProvider={selectedDestination}
@@ -162,11 +151,13 @@ function Home() {
                 handleContinue={handleContinueDestination}
               /> :
               selectedOption == "NONE" ?
+                // If no option is selected, show the options
                 <div className='h-full space-y-10 flex flex-col justify-center items-center'>
-                  <DefaultButton onClick={() => HandleTransfer('transfer')} disabled={false} text="Transfer From Source to Destination" />
-                  <DefaultButton onClick={() => HandleTransfer('sync')} disabled={false} text="Sync With Source" />
+                  <DefaultButton onClick={() => setSelectedOption("TRANSFER")} disabled={false} text="Transfer From Source to Destination" />
+                  <DefaultButton onClick={() => setSelectedOption("SYNC")} disabled={false} text="Sync With Source" />
                 </div>
                 :
+                // If the option is transfer, show the transfer component
                 selectedOption == "TRANSFER" ?
                   <Transfer
                     source={source!}
@@ -174,7 +165,18 @@ function Home() {
                     playlists={selectedSourcePlaylists}
                   />
                   :
-                  <div>Synced</div>
+                  !displaySync ?
+                  // If the option is sync, show the playlists from the destination
+                  <Playlists
+                    provider={destination!}
+                    selectedPlaylists={selectedDestinationPlaylists}
+                    setSelectedPlaylists={setSelectedDestinationPlaylists}
+                    handleSync={HandleDisplaySync} /> :
+                  // If the sync is displayed, show the sync component
+                  <Transfer
+                    source={destination!}
+                    destination={source!}
+                    playlists={playlistsToTransferToSource} />
             }
           </DisplayBox>
         </div>

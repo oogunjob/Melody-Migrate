@@ -61,6 +61,8 @@ export class AppleMusicAPI implements BaseProvider {
     LogIn = async (): Promise<Boolean> => {
         let success = false;
         // @ts-ignore
+        // await this.instance?.unauthorize(); Uncomment this when ready to deploy
+        // @ts-ignore
         await this.instance?.authorize().then((token: any) => { this.musicKitToken = token; success = true });
 
         console.log("Logged in to Apple Music")
