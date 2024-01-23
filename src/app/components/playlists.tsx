@@ -1,6 +1,7 @@
 import React, { Dispatch, SetStateAction, useEffect } from 'react';
 import { BaseProvider } from '../types/sources';
 import LoadingSpinner from './animations/loadingSpinner';
+import DefaultButton from './buttons/defaultButton';
 
 interface Playlist {
   key: number;
@@ -14,7 +15,7 @@ interface Playlist {
 // This is because the playlists are stored in a set, which doesn't allow duplicates
 // Need to use Ids instead of names
 
-function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { provider: BaseProvider, selectedPlaylists: Playlist[], setSelectedPlaylists: Dispatch<SetStateAction<Playlist[]>> }) {
+function Playlists({ provider, selectedPlaylists, setSelectedPlaylists, handleSync }: { provider: BaseProvider, selectedPlaylists: Playlist[], setSelectedPlaylists: Dispatch<SetStateAction<Playlist[]>>, handleSync?: () => void }) {
   const [isLoaded, setIsLoaded] = React.useState<boolean>(false);
   const [playlists, setPlaylists] = React.useState<Playlist[]>([]);
 
@@ -71,7 +72,7 @@ function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { prov
       </div>
 
       {/* Playlists */}
-      <div className="flex justify-center overflow-auto h-full">
+      <div className="flex justify-center overflow-auto h-[full] px-2">
         <div className="grid grid-cols-4">
           {playlists.map((playlist, index) => (
             <div key={index} className={`w-[120px] h-[120px] rounded-lg hover:bg-blue-200 flex items-center justify-center ${selectedPlaylists.includes(playlist) ? 'bg-blue-200' : ''}`}>
@@ -87,6 +88,12 @@ function Playlists({ provider, selectedPlaylists, setSelectedPlaylists }: { prov
           ))}
         </div>
       </div>
+
+      {/* Sync Button */}
+      {handleSync &&
+        <div className="flex items-center justify-center">
+          <DefaultButton onClick={handleSync} disabled={false} text="Sync" />
+        </div>}
     </div>
   );
 }
