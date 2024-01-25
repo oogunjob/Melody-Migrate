@@ -17,7 +17,7 @@ interface SongCriteria {
 export class AppleMusicAPI implements BaseProvider {
     name = "Apple Music";
     icon = "apple_music_icon.png";
-    baseUrl: string = 'https://api.music.apple.com';
+    baseUrl: string = "https://api.music.apple.com";
     maxRetries: number = 3;
 
     private instance: MusicKit.MusicKitInstance | null;
@@ -32,30 +32,29 @@ export class AppleMusicAPI implements BaseProvider {
      * Retrieves header for Apple Music API requests
      * @returns header for creating requests to Apple Music API
      */
-    private GetHeader()
-    {
+    private GetHeader() {
         return {
             Authorization: `Bearer ${process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? ""}`,
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            'Music-User-Token': this.musicKitToken ?? ""
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            "Music-User-Token": this.musicKitToken ?? "",
         };
     }
 
     private CreatePlaylistBody(playlistName: string, trackIds: string[], description: string = ""): any {
-        const mappedSongs: {id: string, type: string}[] = trackIds.map(id => ({ id, type: "songs" }));
+        const mappedSongs: { id: string; type: string }[] = trackIds.map((id) => ({ id, type: "songs" }));
 
         return {
-            "attributes": {
-                "name": playlistName,
-                "description": description
+            attributes: {
+                name: playlistName,
+                description: description,
             },
-            "relationships": {
-                "tracks": {
-                    "data": mappedSongs
-                }
-            }
-        }
+            relationships: {
+                tracks: {
+                    data: mappedSongs,
+                },
+            },
+        };
     }
 
     LogIn = async (): Promise<Boolean> => {
@@ -63,10 +62,13 @@ export class AppleMusicAPI implements BaseProvider {
         // @ts-ignore
         // await this.instance?.unauthorize(); Uncomment this when ready to deploy
         // @ts-ignore
-        await this.instance?.authorize().then((token: any) => { this.musicKitToken = token; success = true });
+        await this.instance?.authorize().then((token: any) => {
+            this.musicKitToken = token;
+            success = true;
+        });
 
-        console.log("Logged in to Apple Music")
-        console.log(success)
+        console.log("Logged in to Apple Music");
+        console.log(success);
 
         return success;
     };
@@ -84,33 +86,32 @@ export class AppleMusicAPI implements BaseProvider {
      * @param id Apple Music playlist id
      * @returns array of songs
      */
-    GetSongsFromPlaylist = async (playlistId: string): Promise<any[]> =>
-    {
+    GetSongsFromPlaylist = async (playlistId: string): Promise<any[]> => {
         const songs: AppleMusicApi.Song[] = [];
 
-        if (playlistId === "library")
-        {
+        if (playlistId === "library") {
             const library = await this.GetSongsFromLibrary();
             songs.push(...library);
             console.log(songs.length);
-        }
-        else
-        {
-            let api_url = this.baseUrl + `/v1/me/library/playlists/${playlistId}/tracks?limit=100`
+        } else {
+            let api_url = this.baseUrl + `/v1/me/library/playlists/${playlistId}/tracks?limit=100`;
 
             // Fetch all songs in the selected playlist
             while (api_url) {
                 try {
                     // Get songs in the playlist
                     const response: AppleMusicApi.Relationship<AppleMusicApi.Song> = await fetch(api_url, {
-                        headers: this.GetHeader()
-                    }).then(response => response.json()).then(data => { return data });
+                        headers: this.GetHeader(),
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            return data;
+                        });
 
                     songs.push(...response.data);
 
                     // Update url to include new offset
-                    api_url = response.next ? this.baseUrl + response.next + '&limit=100' : '';
-
+                    api_url = response.next ? this.baseUrl + response.next + "&limit=100" : "";
                 } catch (error: any) {
                     console.error(`Error: ${error.message}`);
                     break;
@@ -119,7 +120,7 @@ export class AppleMusicAPI implements BaseProvider {
         }
 
         return songs;
-    }
+    };
 
     /**
      * Fetch all songs in the user's library
@@ -128,21 +129,24 @@ export class AppleMusicAPI implements BaseProvider {
     public async GetSongsFromLibrary(): Promise<AppleMusicApi.Song[]> {
         const songs: AppleMusicApi.Song[] = [];
 
-        let api_url = this.baseUrl + '/v1/me/library/songs?limit=100';
+        let api_url = this.baseUrl + "/v1/me/library/songs?limit=100";
 
         // Fetch all songs in the user's library
         while (api_url) {
             try {
                 // Fetch the first 25 songs in the user's library
                 const response: AppleMusicApi.Relationship<AppleMusicApi.Song> = await fetch(api_url, {
-                    headers: this.GetHeader()
-                }).then(response => response.json()).then(data => { return data });
+                    headers: this.GetHeader(),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        return data;
+                    });
 
                 songs.push(...response.data);
 
                 // Update url to include new offset
-                api_url = response.next ? this.baseUrl + response.next + '&limit=100' : '';
-
+                api_url = response.next ? this.baseUrl + response.next + "&limit=100" : "";
             } catch (error: any) {
                 console.error(`Error: ${error.message}`);
                 break;
@@ -162,8 +166,7 @@ export class AppleMusicAPI implements BaseProvider {
         let bestMatchId: string = "";
         let bestMatchScore = -1;
 
-        for (const song of songs)
-        {
+        for (const song of songs) {
             let currentScore = 0;
 
             // Score the matched song based on comparison to the criteria
@@ -186,11 +189,10 @@ export class AppleMusicAPI implements BaseProvider {
             }
         }
 
-        const song = songs.find(song => song.id === bestMatchId);
+        const song = songs.find((song) => song.id === bestMatchId);
         if (song !== undefined) {
             // console.log(`Found best match for ${criteria.songTitle} by ${criteria.artistName} with a score of ${bestMatchScore}: ${foundObject.attributes?.name} by ${foundObject.attributes?.artistName}`);
-        }
-        else {
+        } else {
             console.log(`Could not find best match for ${criteria.songTitle} by ${criteria.artistName}.`);
         }
 
@@ -219,14 +221,22 @@ export class AppleMusicAPI implements BaseProvider {
                 // Fetch the first 25 playlists in the user's library
                 const response: AppleMusicApi.AppleMusicSearchResult = await fetch(api_url, {
                     headers: this.GetHeader(),
-                }).then(response => response.json()).then(data => { return data });
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        return data;
+                    });
 
                 // Find the best match for the song if it exists
                 if (response.results.songs && response.results.songs.data !== undefined) {
-                    songId = this.FindBestMatch(response.results.songs.data, { artistName: artist, songTitle: songTitle, albumTitle: albumTitle, contentRating: explicit ? "explicit" : "clean" })
+                    songId = this.FindBestMatch(response.results.songs.data, {
+                        artistName: artist,
+                        songTitle: songTitle,
+                        albumTitle: albumTitle,
+                        contentRating: explicit ? "explicit" : "clean",
+                    });
                     break;
-                }
-                else {
+                } else {
                     console.log("Could not find song: " + songTitle + " by " + artist + " on Apple Music.");
                     break;
                 }
@@ -235,7 +245,7 @@ export class AppleMusicAPI implements BaseProvider {
 
                 if (error.statusCode === 429 && retryCount < this.maxRetries) {
                     const waitTime = Math.pow(2, retryCount) * 1000; // Exponential backoff
-                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    await new Promise((resolve) => setTimeout(resolve, waitTime));
                     retryCount++;
                 } else {
                     // Handle other errors or break out of the loop
@@ -255,21 +265,24 @@ export class AppleMusicAPI implements BaseProvider {
         const playlists: (AppleMusicApi.Playlist | UserLibrary)[] = [];
         playlists.push({ id: "library", name: "Your Library", description: "Apple Music library" });
 
-        let api_url = this.baseUrl + '/v1/me/library/playlists?offset=0';
+        let api_url = this.baseUrl + "/v1/me/library/playlists?offset=0";
 
         // Fetch all playlists in the user's library
         while (api_url) {
             try {
                 // Fetch the first 25 playlists in the user's library
                 const response: AppleMusicApi.Relationship<AppleMusicApi.Playlist> = await fetch(api_url, {
-                    headers: this.GetHeader()
-                }).then(response => response.json()).then(data => { return data });
+                    headers: this.GetHeader(),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        return data;
+                    });
 
                 playlists.push(...response.data);
 
                 // Update url to include new offset
-                api_url = response.next ? this.baseUrl + response.next : '';
-
+                api_url = response.next ? this.baseUrl + response.next : "";
             } catch (error: any) {
                 console.error(`Error: ${error.message}`);
                 break;
@@ -277,7 +290,7 @@ export class AppleMusicAPI implements BaseProvider {
         }
 
         return playlists;
-    }
+    };
 
     /**
      * Gets the name of the playlist from Apple Music provider
@@ -290,23 +303,31 @@ export class AppleMusicAPI implements BaseProvider {
         }
 
         return playlist?.attributes?.name;
-    }
+    };
 
     /**
      * Transfers the playlists from Apple Music to Apple Music
      * @param destination Apple Music provider that the playlists will be transfered to
      * @param playlists playlists to transfer
      */
-    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void): Promise<void> => {
+    TransferPlaylistsToAppleMusic = async (
+        destination: BaseProvider,
+        playlists: any[],
+        updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void
+    ): Promise<void> => {
         throw new Error("Cannot transfer to Apple Music from Apple Music provider.");
-    }
+    };
 
     /**
      * Transfers the playlists from Apple Music to Spotify
      * @param destination Spotify provider that the playlists will be transfered to
      * @param playlists playlists to transfer
      */
-    TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void): Promise<void> => {
+    TransferPlaylistsToSpotify = async (
+        destination: BaseProvider,
+        playlists: any[],
+        updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void
+    ): Promise<void> => {
         const appleMusicPlaylists: AppleMusicApi.Playlist[] = playlists as AppleMusicApi.Playlist[];
 
         const playlistPromises = appleMusicPlaylists.map(async (playlist) => {
@@ -320,7 +341,12 @@ export class AppleMusicAPI implements BaseProvider {
             const spotifyTracksIds: string[] = [];
             for (const track of tracks) {
                 const isExplicit = track.attributes?.contentRating === "explicit";
-                const songId = await destination.SearchForSong(track.attributes?.name ?? "", track.attributes?.artistName ?? "", track.attributes?.albumName ?? "", isExplicit);
+                const songId = await destination.SearchForSong(
+                    track.attributes?.name ?? "",
+                    track.attributes?.artistName ?? "",
+                    track.attributes?.albumName ?? "",
+                    isExplicit
+                );
 
                 // Push the song id to the array if it was found on Spotify
                 if (songId) {
@@ -340,7 +366,7 @@ export class AppleMusicAPI implements BaseProvider {
 
         // Wait for all playlists to be created
         await Promise.all(playlistPromises);
-    }
+    };
 
     /**
      * Creates a playlist on Apple Music
@@ -350,18 +376,21 @@ export class AppleMusicAPI implements BaseProvider {
      * @returns the id of the playlist
      */
     CreatePlaylist = async (playlistName: string, tracks: string[], description: string = ""): Promise<string> => {
-        const api_url = this.baseUrl + '/v1/me/library/playlists';
+        const api_url = this.baseUrl + "/v1/me/library/playlists";
 
         const response: AppleMusicApi.PlaylistResponse = await fetch(api_url, {
             headers: this.GetHeader(),
             method: "POST",
             body: JSON.stringify(this.CreatePlaylistBody(playlistName, tracks, description)),
-            mode: 'cors'
-        }).then((response) => { return response.json()
-        }).catch((error) => {
-            console.log(error)
+            mode: "cors",
         })
+            .then((response) => {
+                return response.json();
+            })
+            .catch((error) => {
+                console.log(error);
+            });
 
         return response.data[0].id;
-    }
+    };
 }

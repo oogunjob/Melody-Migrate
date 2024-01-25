@@ -1,7 +1,7 @@
 import Head from "next/head";
 
 const DOMAIN = "";
-const SITE_NAME = 'Universal Music Library Transfer';
+const SITE_NAME = "Universal Music Library Transfer";
 
 interface SEOProps {
     title: string;
