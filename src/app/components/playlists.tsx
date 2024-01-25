@@ -43,7 +43,7 @@ function Playlists({
         }
 
         GetPlaylists();
-    }, []);
+    });
 
     const handleToggleAll = () => {
         if (selectedPlaylists.length === playlists.length) {
