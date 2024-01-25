@@ -1,4 +1,4 @@
-import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track, PlaylistedTrack, MaxInt, User, SavedTrack } from "@spotify/web-api-ts-sdk";
+import { SearchResults, SpotifyApi, Playlist, Scopes, Page, Track, PlaylistedTrack, MaxInt, SavedTrack } from "@spotify/web-api-ts-sdk";
 import { BaseProvider, TRANSFER_STATE, UserLibrary } from "../types/sources";
 
 export default class SpotifySDK implements BaseProvider {
@@ -13,74 +13,66 @@ export default class SpotifySDK implements BaseProvider {
     }
 
     // Creates the initial Spotify SDK
-    public static CreateSDK()
-    {
-        const sdk = SpotifyApi.withUserAuthorization(
-            process.env.NEXT_PUBLIC_CLIENT_ID ?? "",
-            process.env.NEXT_PUBLIC_REDIRECT_URI ?? "",
-            [...Scopes.playlist, ...Scopes.userLibraryRead]);
+    public static CreateSDK() {
+        const sdk = SpotifyApi.withUserAuthorization(process.env.NEXT_PUBLIC_CLIENT_ID ?? "", process.env.NEXT_PUBLIC_REDIRECT_URI ?? "", [
+            ...Scopes.playlist,
+            ...Scopes.userLibraryRead,
+        ]);
 
         return sdk;
     }
 
-    private async GetUserId()
-    {
+    private async GetUserId() {
         const user = await this.sdk.currentUser.profile();
         return user.id;
     }
 
-    GetSongsFromLibrary = async (): Promise<any[]> =>{
+    GetSongsFromLibrary = async (): Promise<any[]> => {
         const tracks: SavedTrack[] = [];
 
         let results: Page<SavedTrack> = await this.sdk.currentUser.tracks.savedTracks();
         tracks.push(...results.items);
 
-        while(results.next)
-        {
+        while (results.next) {
             // Extract the query string from the URL
-            const queryString = results.next.split('?')[1];
+            const queryString = results.next.split("?")[1];
             const urlParams = new URLSearchParams(queryString);
 
             // Get offset and limit from the url
-            const offset: number = parseInt(urlParams.get('offset') ?? "100");
-            const limit: MaxInt<50> = parseInt(urlParams.get('limit') ?? "100") as MaxInt<50>;
+            const offset: number = parseInt(urlParams.get("offset") ?? "100");
+            const limit: MaxInt<50> = parseInt(urlParams.get("limit") ?? "100") as MaxInt<50>;
 
             results = await this.sdk.currentUser.tracks.savedTracks(limit, offset);
             tracks.push(...results.items);
         }
 
         return tracks;
-    }
+    };
 
     /**
      * Gets all of the songs in a playlist
      * @param playlistId the id of the playlist
      * @returns an array of all tracks in the playlist
      */
-    GetSongsFromPlaylist = async (playlistId: string): Promise<any[]> =>
-    {
+    GetSongsFromPlaylist = async (playlistId: string): Promise<any[]> => {
         const tracks: any[] = [];
 
-        if (playlistId === "library")
-        {
+        if (playlistId === "library") {
             // Get the user's library
             const songs = await this.GetSongsFromLibrary();
             tracks.push(...songs);
-        }
-        else
-        {
+        } else {
             let results: Page<PlaylistedTrack> = await this.sdk.playlists.getPlaylistItems(playlistId, "US");
             tracks.push(...results.items);
 
-            while(results.next)
-            {
+            while (results.next) {
                 // Extract the query string from the URL
-                const queryString = results.next.split('?')[1];
+                const queryString = results.next.split("?")[1];
                 const urlParams = new URLSearchParams(queryString);
 
                 // Get offset and limit from the url
-                const offset: number = parseInt(urlParams.get('offset') ?? "100");
-                const limit: MaxInt<50> = parseInt(urlParams.get('limit') ?? "100") as MaxInt<50>;
+                const offset: number = parseInt(urlParams.get("offset") ?? "100");
+                const limit: MaxInt<50> = parseInt(urlParams.get("limit") ?? "100") as MaxInt<50>;
 
                 results = await this.sdk.playlists.getPlaylistItems(playlistId, "US", undefined, limit, offset);
                 tracks.push(...results.items);
@@ -88,8 +80,8 @@ export default class SpotifySDK implements BaseProvider {
         }
 
         // Filter out null tracks found in the playlist and map as Track[]
-        return tracks.filter(track => track.track != null).map(track => (track.track as unknown) as Track) as Track[];
-    }
+        return tracks.filter((track) => track.track != null).map((track) => track.track as unknown as Track) as Track[];
+    };
 
     /**
      * Searches for a song on Spotify
@@ -98,13 +90,12 @@ export default class SpotifySDK implements BaseProvider {
      * @param albumTitle the title of the album
      * @returns the uri of the song if found, empty string otherwise
      */
-    SearchForSong = async (artist: string, songTitle: string, albumTitle: string): Promise<string> =>
-    {
-        const results: SearchResults<["track"]> = await this.sdk.search(`${artist} ${songTitle} ${albumTitle}`, ["track"], "US", 3)
+    SearchForSong = async (artist: string, songTitle: string, albumTitle: string): Promise<string> => {
+        const results: SearchResults<["track"]> = await this.sdk.search(`${artist} ${songTitle} ${albumTitle}`, ["track"], "US", 3);
 
         // TODO: Need to create a method that also finds the best match for a song rather than returning the first result
         return results.tracks?.items.length ? results.tracks.items[0].uri : "";
-    }
+    };
 
     /**
      * Creates a playlist on Spotify
@@ -117,8 +108,7 @@ export default class SpotifySDK implements BaseProvider {
         const userId: string = await this.GetUserId();
         const playlist: Playlist = await this.sdk.playlists.createPlaylist(userId, { name: playlistName, description: description, public: false });
 
-        for (let i = 0; i < tracks.length; i += this.maxTracksPerPlaylist)
-        {
+        for (let i = 0; i < tracks.length; i += this.maxTracksPerPlaylist) {
             // Create chunks of tracks
             const tracksChunk = tracks.slice(i, i + this.maxTracksPerPlaylist);
 
@@ -127,7 +117,7 @@ export default class SpotifySDK implements BaseProvider {
         }
 
         return playlist.id;
-    }
+    };
 
     /**
      * Logs user in to Spotify
@@ -168,14 +158,18 @@ export default class SpotifySDK implements BaseProvider {
 
     TransferPlaylistsToSpotify = async (destination: BaseProvider, playlists: any[]): Promise<void> => {
         throw new Error("Cannot transfer to Spotify from Spotify provider.");
-    }
+    };
 
     /**
      * Transfers the playlists from Spotify to Apple Music
      * @param destination Apple Music provider that the playlists will be transfered to
      * @param playlists playlists from Spotify to transfer
      */
-    TransferPlaylistsToAppleMusic = async (destination: BaseProvider, playlists: any[], updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void): Promise<void> => {
+    TransferPlaylistsToAppleMusic = async (
+        destination: BaseProvider,
+        playlists: any[],
+        updateTransferState: (playlistName: string, state: TRANSFER_STATE) => void,
+    ): Promise<void> => {
         const spotifyPlaylists: Playlist[] = playlists as Playlist[];
 
         const playlistPromises = spotifyPlaylists.map(async (playlist) => {
@@ -216,5 +210,5 @@ export default class SpotifySDK implements BaseProvider {
 
         // Wait for all playlists to be created
         await Promise.all(playlistPromises);
-    }
+    };
 }
