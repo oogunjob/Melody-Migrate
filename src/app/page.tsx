@@ -35,7 +35,7 @@ function Home() {
     useEffect(() => {
         // @ts-ignore
         window.MusicKit?.configure({
-            developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN,
+            developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "",
             icon: "https://raw.githubusercontent.com/Musish/Musish/assets/misc/authIcon.png",
         });
 
