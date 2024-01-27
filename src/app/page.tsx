@@ -33,6 +33,9 @@ function Home() {
     // and the user needs to reauthenticate. This is a bug that needs to be fixed.
     // Currently throws a 403 error when trying to fetch the user's library
     useEffect(() => {
+        // TODO: Remove this
+        console.log(process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "");
+        
         // @ts-ignore
         window.MusicKit?.configure({
             developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "",
