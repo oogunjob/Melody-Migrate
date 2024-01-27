@@ -23,9 +23,6 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 
-env:
-
-
 jobs:
   # Build job
   build:
