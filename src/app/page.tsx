@@ -12,8 +12,6 @@ import Transfer from "./components/transfer";
 
 type OPTION = "NONE" | "TRANSFER" | "SYNC";
 
-// TODO: Once this is deployed, will need to make sure that the source cannot be accessed
-// from regular browser.
 function Home() {
     const [source, setSource] = useState<BaseProvider | null | undefined>(null);
     const [destination, setDestination] = useState<BaseProvider | null | undefined>(null);
@@ -33,23 +31,19 @@ function Home() {
     // and the user needs to reauthenticate. This is a bug that needs to be fixed.
     // Currently throws a 403 error when trying to fetch the user's library
     useEffect(() => {
-        // TODO: Remove this
-        console.log(process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "");
 
         // @ts-ignore
-        // window.MusicKit?.configure({
-        //     developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "",
-        //     icon: "https://raw.githubusercontent.com/Musish/Musish/assets/misc/authIcon.png",
-        // });
+        window.MusicKit?.configure({
+            developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "",
+            icon: "https://raw.githubusercontent.com/Musish/Musish/assets/misc/authIcon.png",
+        });
 
         // @ts-ignore
-        // const musicKit = new AppleMusicAPI(window.MusicKit?.getInstance());
+        const musicKit = new AppleMusicAPI(window.MusicKit?.getInstance());
         const spotifySDK = new SpotifySDK(SpotifySDK.CreateSDK());
 
-        setProviders([spotifySDK, spotifySDK]);
+        setProviders([spotifySDK, musicKit]);
     }, []);
-
-    // const [loading, setLoading] = useState(true); // Use this to show the loading of the providers
 
     /**
      * Handles the selection of the source provider
@@ -71,14 +65,10 @@ function Home() {
      * Handles logging in to the source provider
      */
     const handleContinueSource = async () => {
-        // TODO: Remove this
-        console.log(process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "Testing");
-
-        // TODO: Uncomment this
-        // const loggedIn = await selectedSource?.LogIn();
-        // if (loggedIn) {
-        //     setSource(selectedSource);
-        // }
+        const loggedIn = await selectedSource?.LogIn();
+        if (loggedIn) {
+            setSource(selectedSource);
+        }
     };
 
     /**
