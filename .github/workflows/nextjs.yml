@@ -27,6 +27,11 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN: ${{ secrets.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN }}
+      NEXT_PUBLIC_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_CLIENT_ID }}
+      NEXT_PUBLIC_REDIRECT_URI: ${{ secrets.NEXT_PUBLIC_REDIRECT_URI }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,6 +42,7 @@ jobs:
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
             echo "runner=yarn" >> $GITHUB_OUTPUT
+            echo "Testing secret: ${{ secrets.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN }}"
             exit 0
           elif [ -f "${{ github.workspace }}/package.json" ]; then
             echo "manager=npm" >> $GITHUB_OUTPUT
@@ -74,10 +80,6 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
-        env:
-          NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN: ${{ secrets.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN }}
-          NEXT_PUBLIC_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_CLIENT_ID }}
-          NEXT_PUBLIC_REDIRECT_URI: ${{ secrets.NEXT_PUBLIC_REDIRECT_URI }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
