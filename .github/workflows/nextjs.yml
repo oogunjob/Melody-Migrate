@@ -27,6 +27,7 @@ jobs:
   # Build job
   build:
     runs-on: ubuntu-latest
+    environment: github-pages
     env:
       NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN: ${{ secrets.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN }}
       NEXT_PUBLIC_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_CLIENT_ID }}
