@@ -35,18 +35,18 @@ function Home() {
     useEffect(() => {
         // TODO: Remove this
         console.log(process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "");
-        
-        // @ts-ignore
-        window.MusicKit?.configure({
-            developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "",
-            icon: "https://raw.githubusercontent.com/Musish/Musish/assets/misc/authIcon.png",
-        });
 
         // @ts-ignore
-        const musicKit = new AppleMusicAPI(window.MusicKit?.getInstance());
+        // window.MusicKit?.configure({
+        //     developerToken: process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "",
+        //     icon: "https://raw.githubusercontent.com/Musish/Musish/assets/misc/authIcon.png",
+        // });
+
+        // @ts-ignore
+        // const musicKit = new AppleMusicAPI(window.MusicKit?.getInstance());
         const spotifySDK = new SpotifySDK(SpotifySDK.CreateSDK());
 
-        setProviders([spotifySDK, musicKit]);
+        setProviders([spotifySDK, spotifySDK]);
     }, []);
 
     // const [loading, setLoading] = useState(true); // Use this to show the loading of the providers
@@ -71,10 +71,14 @@ function Home() {
      * Handles logging in to the source provider
      */
     const handleContinueSource = async () => {
-        const loggedIn = await selectedSource?.LogIn();
-        if (loggedIn) {
-            setSource(selectedSource);
-        }
+        // TODO: Remove this
+        console.log(process.env.NEXT_PUBLIC_APPLE_DEVELOPER_TOKEN ?? "Testing");
+
+        // TODO: Uncomment this
+        // const loggedIn = await selectedSource?.LogIn();
+        // if (loggedIn) {
+        //     setSource(selectedSource);
+        // }
     };
 
     /**
