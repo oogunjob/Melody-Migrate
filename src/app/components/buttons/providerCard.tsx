@@ -22,7 +22,7 @@ function ProviderCard({
             }}
         >
             <div className="h-[142px] w-[134px]">
-                <img src={`/icons/${provider.icon}`} alt="My Image" />
+                <img src={`./icons/${provider.icon}`} alt={provider.name} />
             </div>
             <span className="text-lg">{provider.name}</span>
         </div>
