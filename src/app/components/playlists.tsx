@@ -94,7 +94,7 @@ function Playlists({
                         >
                             <div onClick={() => handleToggleOption(playlist)} className={`flex flex-col items-center justify-center cursor-pointer `}>
                                 <div className={`flex items-center justify-center w-20 h-20 bg-white rounded-[10px] shadow`}>
-                                    <img src={`/icons/playlist_icon.svg`} alt={playlist.name} />
+                                    <img src={`./icons/playlist_icon.svg`} alt={playlist.name} />
                                 </div>
                                 <div className="flex items-center justify-center">
                                     <label

@@ -7,7 +7,7 @@ function Footer() {
             <div className="flex justify-evenly space-x-10 mt-4 text-lg text-gray-600">
                 <div>
                     <a href="https://github.com/oogunjob/Universal-Music-Library-Transfer" target="_blank" className="flex items-center space-x-2">
-                        <img src="/icons/github-mark.svg" alt="Github Icon" className="w-6 h-6" />
+                        <img src="./icons/github-mark.svg" alt="Github Icon" className="w-6 h-6" />
                         <span>GitHub</span>
                     </a>
                 </div>

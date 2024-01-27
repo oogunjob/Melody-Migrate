@@ -63,7 +63,7 @@ function Transfer({ source, destination, playlists }: { source: BaseProvider; de
                     <div key={index} className="flex justify-center mx-3">
                         <div className="w-[315px] h-20 flex items-center font-normal bg-white rounded-[10px] shadow mr-5 mb-5 overflow-hidden overflow-ellipsis whitespace-nowrap">
                             <div className="mx-2 ">
-                                <img src={`/icons/playlist_icon.svg`} alt={playlist.name} />
+                                <img src={`./icons/playlist_icon.svg`} alt={playlist.name} />
                             </div>
                             {source.GetPlaylistName(playlist)}
                         </div>
