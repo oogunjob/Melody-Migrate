@@ -40,39 +40,28 @@ function Playlists({
         GetPlaylists();
     }, []);
 
-    const handleToggleAll = () => {
-        if (selectedPlaylists.length === playlists.length) {
-            console.log("clear")
-            // All options are selected, clear selection
-            setSelectedPlaylists([]);
-        } else {
-            console.log("select all")
-            // Not all options are selected, select all
-            setSelectedPlaylists([...playlists]);
-        }
-    };
+    const toggleOption = (playlist: Playlist) => {
+        setSelectedPlaylists((selectedPlaylists) => {
+          if (selectedPlaylists.includes(playlist)) {
+            // If already selected, remove it
+            return selectedPlaylists.filter((selectedPlaylist) => selectedPlaylist.key !== playlist.key);
+          } else {
+            // If not selected, add it
+            return [...selectedPlaylists, playlist];
+          }
+        });
+      };
 
-    // Toggle the playlist option to be selected or not
-    const handleToggleOption = (playlist: Playlist) => {
+      const toggleSelectAll = () => {
+        // If all options are already selected, deselect all; otherwise, select all
+        setSelectedPlaylists((selectedPlaylist) =>
+        selectedPlaylist.length === playlists.length ? [] : playlists
+        );
+      };
 
-        console.log(playlist)
-
-        // Select the option if it hasn't been selected yet
-        if (!isSelected(playlist)) {
-            setSelectedPlaylists([...selectedPlaylists, playlist]);
-        }
-        // Deselect the option if it has been selected
-        else {
-            setSelectedPlaylists(selectedPlaylists.filter((selected) => selected.key !== playlist.key));
-        }
-
-        console.log(selectedPlaylists);
-    };
-
-    // Check if the playlist is selected
-    const isSelected = (playlist: Playlist) => {
-        return selectedPlaylists.map(selected => selected.key).includes(playlist.key);
-    };
+      const isSelected = (playlist: Playlist) => {
+        return selectedPlaylists.includes(playlist);
+      }
 
     if (!isLoaded) {
         return <LoadingSpinner />;
@@ -87,7 +76,7 @@ function Playlists({
                         className="w-5 h-5 mr-3 cursor-pointer"
                         type="checkbox"
                         checked={selectedPlaylists.length === playlists.length}
-                        onChange={handleToggleAll}
+                        onChange={toggleSelectAll}
                     />
                     <div className="text-black text-xl font-medium">Select All</div>
                 </label>
@@ -101,7 +90,7 @@ function Playlists({
                             key={index}
                             className={`w-[120px] h-[120px] rounded-lg hover:bg-blue-200 flex items-center justify-center ${isSelected(playlist) ? "bg-blue-200" : ""}`}
                         >
-                            <div onClick={() => handleToggleOption(playlist)} className={`flex flex-col items-center justify-center cursor-pointer `}>
+                            <div onClick={() => toggleOption(playlist)} className={`flex flex-col items-center justify-center cursor-pointer `}>
                                 <div className={`flex items-center justify-center w-20 h-20 bg-white rounded-[10px] shadow`}>
                                     <img src={`./icons/playlist_icon.svg`} alt={playlist.name} />
                                 </div>
