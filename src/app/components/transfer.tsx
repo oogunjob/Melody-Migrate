@@ -21,7 +21,7 @@ function Transfer({ source, destination, playlists }: { source: BaseProvider; de
         };
 
         transferPlaylists();
-    });
+    }, []);
 
     // Might need to use an id here instead of the name
     function updateTransferState(playlistName: string, state: TRANSFER_STATE) {

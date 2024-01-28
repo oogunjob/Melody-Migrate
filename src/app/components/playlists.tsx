@@ -27,6 +27,8 @@ function Playlists({
             const retrievedPlaylists = await provider.GetPlaylists();
             const playlists = retrievedPlaylists.map((item, index) => ({ ...item, key: index + 1 }));
 
+            console.log(playlists);
+
             // Set the playlists and selected playlists
             setPlaylists(playlists);
             setSelectedPlaylists(playlists);
@@ -36,13 +38,15 @@ function Playlists({
         }
 
         GetPlaylists();
-    });
+    }, []);
 
     const handleToggleAll = () => {
         if (selectedPlaylists.length === playlists.length) {
+            console.log("clear")
             // All options are selected, clear selection
             setSelectedPlaylists([]);
         } else {
+            console.log("select all")
             // Not all options are selected, select all
             setSelectedPlaylists([...playlists]);
         }
@@ -50,6 +54,9 @@ function Playlists({
 
     // Toggle the playlist option to be selected or not
     const handleToggleOption = (playlist: Playlist) => {
+
+        console.log(playlist)
+
         // Select the option if it hasn't been selected yet
         if (!isSelected(playlist)) {
             setSelectedPlaylists([...selectedPlaylists, playlist]);
